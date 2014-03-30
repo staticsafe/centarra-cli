@@ -3,5 +3,8 @@
     "help": {
         "command_not_found": "That command couldn't be located. Check your spelling and try again"
     },
-    "command_not_found": "The command you entered does not exist. Check out `help' for a list of commands."
+    "command_not_found": "The command you entered does not exist. Check out `help' for a list of commands.",
+    "not_enough_arguments": "You have not provided enough arguments for this command. Check `help' for usage.",
+    "too_many_arguments": "You have provided more arguments than this command needs. Check `help' for usage.",
+    "incorrect_arguments": "The amount of arguments provided was incorrect. Check `help' for usage."
 }

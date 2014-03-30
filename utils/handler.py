@@ -58,15 +58,17 @@ class CommandError():
 
 class HookManager():
     commands = {
-        # command name => {'function': function, 'flags': flags, 'return_json': bool, 'doc': documentation}
+        # command name => {'function': function, 'flags': flags,
+        # 'min_args': int, 'return_json': bool, 'doc': documentation}
     }
 
-    def command(self, command, flags=None, return_json=True, doc=language['no_documentation']):
+    def command(self, command, flags=None, args_amt=0, return_json=True, doc=language['no_documentation']):
         if command in self.commands:
             raise NameError(command)
 
         def wrapped(func):
-            self.commands[command] = {'function': func, 'flags': flags, 'return_json': return_json, 'doc': doc}
+            self.commands[command] = {'function': func, 'args_amt': args_amt,
+                                      'flags': flags, 'return_json': return_json, 'doc': doc}
         return wrapped
 
     def dispatch(self, raw_command):
@@ -83,6 +85,14 @@ class HookManager():
         if not command in self.commands:
             return language['command_not_found']
         command = self.commands[command]
+        if type(command['args_amt']) is int:
+            if command['args_amt'] < len(args):
+                return language['not_enough_arguments']  # TODO, skip a step and give them the usage.
+            elif command['args_amt'] > len(args):
+                return language['too_many_arguments']
+        else:  # lambda, function.
+            if not command['args_amt'](args):
+                return language['incorrect_arguments']
         # we pass an args list and Flags object to the command. we have HookFlags + json flag.
         flags = {}
         wants_json = False
