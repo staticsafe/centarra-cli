@@ -26,12 +26,18 @@ class HookFlags():
             self.dct[i] = tmp
 
     def match(self, flag):
-        if hasattr(self.dct, flag):
-            return flag, self.dct[flag]['param']
+        if not flag.startswith('-'):
+            a = []
+            for i in list(flag[1:]):
+                if i in self.dct:
+                    a.append((flag, self.dct[flag]['param']))
+                else:
+                    a.append((False, i))
+            return a
         for i in self.dct:
             if self.dct[i]['long'] == flag[1:]:
-                return i, self.dct[i]['param']
-        return False
+                return [(i, self.dct[i]['param'])]
+        return [False, flag]
 
 
 class JsonResponse():
@@ -62,7 +68,7 @@ class HookManager():
         # 'min_args': int, 'return_json': bool, 'doc': documentation}
     }
 
-    def command(self, command, flags=None, args_amt=0, return_json=True, doc=language['no_documentation']):
+    def command(self, command, flags=HookFlags(), args_amt=0, return_json=True, doc=(language['no_documentation'])):
         if command in self.commands:
             raise NameError(command)
 
@@ -85,14 +91,6 @@ class HookManager():
         if not command in self.commands:
             return language['command_not_found']
         command = self.commands[command]
-        if type(command['args_amt']) is int:
-            if command['args_amt'] < len(args):
-                return language['not_enough_arguments']  # TODO, skip a step and give them the usage.
-            elif command['args_amt'] > len(args):
-                return language['too_many_arguments']
-        else:  # lambda, function.
-            if not command['args_amt'](args):
-                return language['incorrect_arguments']
         # we pass an args list and Flags object to the command. we have HookFlags + json flag.
         flags = {}
         wants_json = False
@@ -106,16 +104,26 @@ class HookManager():
                     i += 1
                     continue
                 match = hook_flags.match(args[i][1:])
-                if match:
-                    if match[1] is True:
-                        flags[match[0]] = args[i + 1]  # TODO if people don't put in the args they should, IndexErrors
-                        args[i + 1] = None
-                        i += 1
-                    else:
-                        flags[match[0]] = True
+                for j in match:  # list of tuple(False, i) or (i, False/True)
                     args[i] = None
+                    if j[0] is False:
+                        print("Flag %s is unknown to this command." % j[1])
+                        continue
+                    if j[1] is True:
+                        i += 1
+                        flags[j[0]] = args[i]  # TODO don't let IndexErrors happen
+                        continue
+                    flags[j[0]] = True
             i += 1
         args = [x for x in args if x is not None]
+        if type(command['args_amt']) is int:
+            if command['args_amt'] > len(args):
+                return language['not_enough_arguments']  # TODO, skip a step and give them the usage.
+            elif command['args_amt'] < len(args):
+                return language['too_many_arguments']
+        else:  # lambda, function.
+            if not command['args_amt'](args):
+                return language['incorrect_arguments']
 
         response = command['function'](args, flags)
 
@@ -133,9 +141,9 @@ class HookManager():
         # this returns the string we want to print out as help.
         if not command or command == []:
             rply = ""
-            for cmd in self.commands:
-                rply += "`%s': %s\r\n" % (cmd, self.commands[cmd]['doc'])
+            for cmd in sorted(self.commands):
+                rply += "`%s': %s\r\n" % (cmd, self.commands[cmd]['doc'][0])
             return rply
-        if command in self.commands:
-            return self.commands['command']['doc']  # TODO returns json, flags...
+        if ' '.join(command) in self.commands:
+            return '\r\n'.join(self.commands[' '.join(command)]['doc'])
         return language['help']['command_not_found']

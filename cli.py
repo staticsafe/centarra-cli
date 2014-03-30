@@ -10,6 +10,21 @@ if not config['centarra_username']:
     print('Please enter in your Centarra username and api-key before continuing')
     sys.exit(0)
 
-while True:
-    line = raw_input('>>>')
-    print(hook.dispatch(line))
+import readline
+
+def completer(text, state):
+    options = [i for i in hook.commands if i.startswith(text)]
+    if state < len(options):
+        return options[state]
+    else:
+        return None
+
+readline.parse_and_bind("tab: complete")
+readline.set_completer(completer)
+
+try:
+    while True:
+        line = raw_input('>>> ')
+        print(hook.dispatch(line))
+except KeyboardInterrupt:
+    print("\r\nExiting program")
