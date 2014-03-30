@@ -1,0 +1,7 @@
+{
+    "no_documentation": "No documentation provided.",
+    "help": {
+        "command_not_found": "That command couldn't be located. Check your spelling and try again"
+    },
+    "command_not_found": "The command you entered does not exist. Check out `help' for a list of commands."
+}
