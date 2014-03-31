@@ -9,7 +9,7 @@ CENTARRA_BASE_URL = "https://billing.centarra.com"
 
 def centarra(url, **kwargs):
     if kwargs == {}:
-        r = requests.get(CENTARRA_BASE_URL + url, params=kwargs,
+        r = requests.get(CENTARRA_BASE_URL + url,
         auth=(config['centarra_username'], config['centarra_api_key']))
     else:
         r = requests.post(CENTARRA_BASE_URL + url, data=kwargs,

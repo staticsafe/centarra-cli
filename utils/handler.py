@@ -30,7 +30,7 @@ class HookFlags():
             a = []
             for i in list(flag):
                 if i in self.dct:
-                    a.append((flag, self.dct[flag]['param']))
+                    a.append((i, self.dct[i]['param']))
                 else:
                     a.append((False, i))
             return a

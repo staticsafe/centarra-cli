@@ -32,5 +32,5 @@ Flags can be in any order, but their arguments can not, and all command argument
 
 ### Contributing
 
-A sample command and explanation can be found in `/commands/\_\_init\_\_.py`, for help in creating your own commands.
+A sample command and explanation can be found in `/commands/__init__.py`, for help in creating your own commands.
 
