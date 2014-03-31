@@ -28,7 +28,7 @@ class HookFlags():
     def match(self, flag):
         if not flag.startswith('-'):
             a = []
-            for i in list(flag[1:]):
+            for i in list(flag):
                 if i in self.dct:
                     a.append((flag, self.dct[flag]['param']))
                 else:
@@ -68,7 +68,7 @@ class HookManager():
         # 'min_args': int, 'return_json': bool, 'doc': documentation}
     }
 
-    def command(self, command, flags=HookFlags(), args_amt=0, return_json=True, doc=(language['no_documentation'])):
+    def command(self, command, flags=HookFlags(), args_amt=0, return_json=True, doc=(language['no_documentation'],)):
         if command in self.commands:
             raise NameError(command)
 
@@ -85,9 +85,11 @@ class HookManager():
         if len(args) < 1:
             return ""  # they didn't type a command, let's not yell at them for it
         if args[0] == "help":
-            return self.help(args[1:])
-        command = ' '.join(args[0:2])  # neat, these don't throw errors if the list is too short.
-        args = args[2:]
+            command = ' '.join(args[0:1])
+            args = args[1:]
+        else:
+            command = ' '.join(args[0:2])  # neat, these don't throw errors if the list is too short.
+            args = args[2:]
         if not command in self.commands:
             return language['command_not_found']
         command = self.commands[command]
@@ -112,6 +114,7 @@ class HookManager():
                     if j[1] is True:
                         i += 1
                         flags[j[0]] = args[i]  # TODO don't let IndexErrors happen
+                        args[i] = None
                         continue
                     flags[j[0]] = True
             i += 1
@@ -136,14 +139,3 @@ class HookManager():
             return response.form()
 
         return response
-
-    def help(self, command):
-        # this returns the string we want to print out as help.
-        if not command or command == []:
-            rply = ""
-            for cmd in sorted(self.commands):
-                rply += "`%s': %s\r\n" % (cmd, self.commands[cmd]['doc'][0])
-            return rply
-        if ' '.join(command) in self.commands:
-            return '\r\n'.join(self.commands[' '.join(command)]['doc'])
-        return language['help']['command_not_found']

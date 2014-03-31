@@ -24,7 +24,7 @@ For a refresher:
  - flags are specified using `-l` or `--long-version`, and multiple flags can be chained on a single-dashed 'short' flag: `-helo` is equivelent to `-h -e -l -o`
  - Parametered flags grab the next parameter they can find: `-h value` takes `value` to `-h`, while `-hi v1 v2` takes `v1` to `-h` and `v2` to `-i`
 
-`help` on its own will display all available commands, and a brief idea of what they do. Coming soon: `help --regex billing.+` (or wildcards)
+`help` on its own will display all available commands, and a brief idea of what they do. Also available: `help --regex billing` (or `-r`)
 
 `help <command>` will display all help for the command you have specified. This is closest to a manual page - it should provide all information about flags accepted, parameters expected, and what the command will do.
 
