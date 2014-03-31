@@ -28,3 +28,4 @@ def first_command(args, flags):  # flags is passed as a Flags object. args is a 
 from commands.profile import *
 from commands.vps import *
 from commands.help import *
+from commands.builtin import *

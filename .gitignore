@@ -2,3 +2,6 @@ config.json
 .idea/
 *.pyc
 *~
+libs/substitutes.json
+languages/.cli_history
+

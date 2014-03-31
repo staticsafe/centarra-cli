@@ -1,6 +1,7 @@
 from utils.config import language
 from shlex import split
 import json
+from libs import substitutes
 
 
 class HookFlags():
@@ -82,9 +83,24 @@ class HookManager():
         # we also make the arguments into some nice easy-to-use objects.
         # this returns the string we want to print out
         args = split(raw_command)  # shlex keeps quoted stuff in one argument
+        go = True  # the weird go thing is to make sure we get don't overwrite the wrong args from original array shifts
+        while go:
+            for i, v in enumerate(args):
+                v = str(v) # substituted values can take interesting forms!
+                go = False
+                if v.startswith("$"):
+                    if v[1:] in substitutes:
+                        if substitutes[v[1:]][1]:
+                            args = args[:i] + split(substitutes[v[1:]][0]) + args[i+1:]
+                            go = True
+                            break
+                        else:
+                            args = args[:i] + [substitutes[v[1:]][0]] + args[i+1:]
+                            go = True
+                            break
         if len(args) < 1:
             return ""  # they didn't type a command, let's not yell at them for it
-        if args[0] == "help":
+        if args[0] in ["help", "set", "get"]:  # builtin commands
             command = ' '.join(args[0:1])
             args = args[1:]
         else:

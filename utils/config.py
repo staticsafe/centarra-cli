@@ -3,7 +3,7 @@ import json
 
 
 def conf_get(file):
-    js = open(file)
+    js = open(file, "r+")
     data = json.load(js)
     return data
 

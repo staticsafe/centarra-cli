@@ -1,5 +1,14 @@
 #!/usr/bin/python
 
+import os
+import json
+
+if not os.path.exists('languages/.cli_history'):
+    open('languages/.cli_history', 'a').close()
+if not os.path.exists('libs/substitutes.json'):
+    with open('libs/substitutes.json', 'w+') as out:
+        json.dump({}, out)
+
 import commands
 from utils import hook
 import sys
@@ -23,12 +32,15 @@ def completer(text, state):
 
 readline.parse_and_bind("tab: complete")
 readline.set_completer(completer)
+readline.read_history_file("languages/.cli_history")
 
 try:
     while True:
         line = raw_input('>>> ')
         print(hook.dispatch(line))
 except KeyboardInterrupt:
+    readline.write_history_file('languages/.cli_history')
     print("\r\nExiting program")
 except EOFError:
+    readline.write_history_file('languages/.cli_history')
     print("\r\nExiting program")
