@@ -16,8 +16,7 @@ flags = HookFlags(a=('long-flag', True), b=('longer-flag', False)) # Passing Tru
 def first_command(args, flags):  # flags is passed as a Flags object. args is a list as parameters, in order, sep by " "
     # you can access anything in the util section and access the api, but we do want to allow the option to return json
     # so, we have a choice of what we want to return
-    return JsonResponse(raw_json="{}", reply="Your text you want to respond %s with %s parameters, not filled in.",
-        'formatting/strings', 'each/slash/represents/a/layer/down/in/the/json/formatting')
+    return JsonResponse(raw_json="{}", reply="Your text you want to respond with - use the raw json as much as you can")
     # or
     return "Just a boring old string. Was your query successful?"  # --json will not work with this.
 

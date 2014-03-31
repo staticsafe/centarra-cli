@@ -1,11 +1,31 @@
 from utils import hook, HookFlags, JsonResponse
-from libs import centarra
+from libs import centarra, substitutes, dump_subs
 
 flags = HookFlags(l='ip-limits', s='sla', i='ips', m='mac', u='user', w='watchdog', M='memory', S='swap', D='disk')
 
-@hook.command('vps list', flags=flags, return_json=True, doc=('View information on all your current vServers',))
-def first_command(args, flags):
+@hook.command('vps list', flags=flags, doc=("View information on all your current vServers.",
+                                                              "Alone, this command returns only a brief list of all your servers.",
+                                                              "Using flags, you can display any information you might want about your server:",
+                                                              "\t-l, --ip-limits: Display ipv4 and ipv6 IP address limits",
+                                                              "\t-s, --sla: Display your server's CPU SLA status",
+                                                              "\t-i, --ips: Display a brief list of all your server's ip addresses",
+                                                              "\t-m, --mac: Display the MAC address of your server",
+                                                              "\t-u, --user: Display the owner of this VPS (probably you)",
+                                                              "\t-w, --watchdog: Display if Watchdog monitoring is enabled on this server",
+                                                              "\t-M, --memory: Display the amount of memory this server has allocated",
+                                                              "\t-S, --swap: Display the amount of SWAP this server has allocated",
+                                                              "\t-D, --disk: Display the disk space this server can access.",
+                                                              "Running this command will also set up VPS name substitutes if they are not already set.",
+                                                              "Usage:",
+                                                              "\tvps list [-lsimuwMSD]"))
+def list(args, flags):
     reply = centarra('/vps/list')
+    for i in reply['vpslist']:
+        if not i['name'] in substitutes:
+            substitutes[i['name']] = [str(i['id']), False]
+        if not i['nickname'] in substitutes:
+            substitutes[i['nickname']] = [str(i['id']), False]
+    dump_subs()
     rpl = []
     for i in reply['vpslist']:
         st = '\t{id}: {name} ("{nickname}") on {node}\t\t' + \
@@ -22,3 +42,20 @@ def first_command(args, flags):
 
     rpl = '\r\n'.join(rpl)
     return JsonResponse(reply, "Your current vServers: \r\n%s" % rpl)
+
+
+@hook.command("vps available", args_amt=1)
+def available(args, flags):
+    reply = centarra('/vps/signup')
+    for i in available['regions']:
+        if not i['name'] in substitutes:
+            substitutes[i['name']] = [str(i['id']), False]
+    for i in available['resource_plans']:
+        if not i['name'] in substitutes:
+            substitutes[i['name']] = [str(i['id']), False]
+    dump_subs()
+    if args[0] == "regions":
+        pass
+    else:
+        pass
+    return JsonResponse(reply, "")
