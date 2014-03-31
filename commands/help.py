@@ -17,6 +17,6 @@ def help(args, flags):
             if rg is None or rg.search(cmd):
                 rply += "`%s': %s\r\n" % (cmd, hook.commands[cmd]['doc'][0])
         return rply
-    if ' '.join(command) in hook.commands:
-        return '\r\n'.join(hook.commands[' '.join(command)]['doc'])
+    if command in hook.commands:
+        return '\r\n'.join(hook.commands[command]['doc'])
     return language['help']['command_not_found']

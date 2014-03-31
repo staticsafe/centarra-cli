@@ -17,7 +17,7 @@ def webhook_uri(args, flags):
                    "profile contact <email> <organization> <contact_name> <address1> " +
                    "<address2> <city> <state> <country> <phone> <zip>"))
 def profile_contact(args, flags):
-    args={
+    args = {
         'new_email': args[0],
         'organization': args[1],
         'contact_name': args[2],

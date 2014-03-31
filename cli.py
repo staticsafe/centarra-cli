@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 import commands
 from utils import hook
 import sys
@@ -27,4 +29,6 @@ try:
         line = raw_input('>>> ')
         print(hook.dispatch(line))
 except KeyboardInterrupt:
+    print("\r\nExiting program")
+except EOFError:
     print("\r\nExiting program")
