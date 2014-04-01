@@ -1,5 +1,5 @@
 from utils import hook, HookFlags, JsonResponse
-from libs import centarra, substitutes, dump_subs
+from libs import centarra, substitutes, sub
 
 flags = HookFlags(l='ip-limits', s='sla', i='ips', m='mac', u='user', w='watchdog', M='memory', S='swap', D='disk')
 
@@ -21,11 +21,8 @@ flags = HookFlags(l='ip-limits', s='sla', i='ips', m='mac', u='user', w='watchdo
 def list(args, flags):
     reply = centarra('/vps/list')
     for i in reply['vpslist']:
-        if not i['name'] in substitutes:
-            substitutes[i['name']] = [str(i['id']), False]
-        if not i['nickname'] in substitutes:
-            substitutes[i['nickname']] = [str(i['id']), False]
-    dump_subs()
+        sub(i['name'], i['id'])
+        sub(i['nickname'], i['id'])
     rpl = []
     for i in reply['vpslist']:
         st = '\t{id}: {name} ("{nickname}") on {node}\t\t' + \
@@ -46,8 +43,10 @@ def list(args, flags):
 
 flags = HookFlags(l='ip-limits', b='btc-price', S='swap', M='memory', D='disk')
 
-@hook.command("vps available", args_amt=1, doc=("View available vServers that are currently being sold, as well as available regions.",
+@hook.command("vps available", args_amt=1, flags=flags, doc=("View available vServers that are currently being sold, as well as available regions.",
                                                 "All of the available plans are available here - however, see `vps stock' for information on region stock.",
+                                                "This command also sets all resource plan names and region names to variables representing their ids,",
+                                                "Therefore using `$Dallas' in a command will have the value of its region id (if it is not already set). Keep in mind you can quote an argument to retain spaces.",
                                                 "There are two subcommands available:",
                                                 "\tregions: Display regions Centarra supports.",
                                                 "\tplans: Display information on plans available for purchase in these regions. This includes plan ID, name, and price (in USD) by default",
@@ -56,16 +55,15 @@ flags = HookFlags(l='ip-limits', b='btc-price', S='swap', M='memory', D='disk')
                                                 "\t-b, --btc-price: Display the price of a plan in BTC",
                                                 "\t-S, --swap: Display the amount of swap that would be allocated to this plan",
                                                 "\t-M, --memory: Display the amount of memory this plan would be allocated (also included in plan names)",
-                                                "\t-D, --disk: Display the disk space allocated to this plan"))
+                                                "\t-D, --disk: Display the disk space allocated to this plan",
+                                                "Usage:",
+                                                "\t`vps available (regions|plans [-lbSMD])'"))
 def available(args, flags):
     reply = centarra('/vps/signup')
     for i in reply['regions']:
-        if not i['name'] in substitutes:
-            substitutes[i['name']] = [str(i['id']), False]
+        sub(i['name'], i['id'])
     for i in reply['resource_plans']:
-        if not i['name'] in substitutes:
-            substitutes[i['name']] = [str(i['id']), False]
-    dump_subs()
+        sub(i['name'], i['id'])
     if args[0] == "regions":
         return JsonResponse(reply['regions'], '\r\n'.join(["(%s): %s" % (i['id'], i['name']) for i in reply['regions']]))
     else:
@@ -78,3 +76,38 @@ def available(args, flags):
                        + ("\tDisk {disk}gb" if 'D' in flags else "")
             ).format(**i))
         return JsonResponse(reply, '\r\n'.join(rpl))
+
+
+@hook.command("vps signup", args_amt=2, doc=("Sign up for a brand new VPS using information from `vps available'.",
+                                             "This command accepts only a plan and a region - the rest is worked out by deploying.",
+                                             "Remember that, after viewing available plans and regions, you can use plan names as variables for their plan ids."
+                                             "Usage:",
+                                             "\t`vps signup <region> <plan>'",
+                                             "Examples:"
+                                             "\t`vps signup $Dallas \"$TortoiseCloud 256\"' (after viewing available plans)"))
+def signup(args, flags):
+    reply = centarra('/vps/signup', plan=args[0], region=args[1])
+    sub(reply['name'], reply['id'], False)
+    return JsonResponse(reply, "Your new vps is now named {name} (#{id}) on node {node}. Deploy it with `vps deploy'!"
+                                                .format(**reply['service']))
+
+
+flags = HookFlags(i="ips")
+@hook.command("vps info", args_amt=1, doc=("View detailed information regarding your vServer.",
+                                            "Flags:"
+                                            "\t-i, --ips: Display information on this server's IP addresses",
+                                            "Usage:",
+                                            "\tvps info <server_id> [-i]",
+                                            "Examples:",
+                                            "\tvps info $nickname -i"))
+def info(args, flags):
+    reply = centarra('/vps/%s' % args[0])
+    service = reply['service']
+    service['w'] = ' not' if not service['monitoring'] else ''
+    rpl = "\r\nServer {id} - {name} (\"{nickname}\")" + \
+        "\r\n\t{name} is on node {node} with {cpu_sla} CPU SLA status." + \
+        "\r\n\t{name} has {memory}mb memory, {swap}mb swap, and {disk}gb disk space." + \
+        "\r\n\t{name} is{w} being monitored, and had MAC address {mac}" + \
+        "\r\n\t{name} is allowed {ipv6_limit} IPv6 addresses and {ipv4_limit} IPv4 addresses." + \
+          (''.join(["\r\n\tIt has IPv{x} address {ip} (id {id})".format(x=i['ipnet']['version'], **i) for i in service['ips']]) if 'i' in flags else '')
+    return JsonResponse(reply, rpl.format(**service))
