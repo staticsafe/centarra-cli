@@ -134,7 +134,7 @@ flags = HookFlags(v=('virtualization', True), s='start')
                                  "\t-v, --virtualization <64bit-pvm|32bit-pvm|hvm|rescue>: Change the virtualization type of your vServer. Default is 64bit-pvm",
                                  "\t-s, --start: Start your vps immediately after finishing deployment",
                                  "Usage:",
-                                 "vps deploy <vps_id> <image_name> <root_password> [-v virtualization] [-s]"))
+                                 "\tvps deploy <vps_id> <image_name> <root_password> [-v virtualization] [-s]"))
 def deploy(args, flags):
     send = {}
     if 's' in flags:
