@@ -29,7 +29,7 @@ def list(args, flags):
     rpl = []
     for i in reply['vpslist']:
         st = '\t{id}: {name} ("{nickname}") on {node}\t\t' + \
-             ("ipv6 limit {ipv6_limit}, ipv4 limit {ipv4_limit}\t" if 'l' in flags else '') + \
+             ("IPv6 limit {ipv6_limit}, IPv4 limit {ipv4_limit}\t" if 'l' in flags else '') + \
              ("{cpu_sla} CPU SLA\t" if 's' in flags else '') + \
              ((("IPs: " + ", ".join([j['ip'] for j in i['ips']])) + "\t") if 'i' in flags else '') + \
              ("MAC address {mac}\t" if 'm' in flags else '') + \
@@ -44,18 +44,37 @@ def list(args, flags):
     return JsonResponse(reply, "Your current vServers: \r\n%s" % rpl)
 
 
-@hook.command("vps available", args_amt=1)
+flags = HookFlags(l='ip-limits', b='btc-price', S='swap', M='memory', D='disk')
+
+@hook.command("vps available", args_amt=1, doc=("View available vServers that are currently being sold, as well as available regions.",
+                                                "All of the available plans are available here - however, see `vps stock' for information on region stock.",
+                                                "There are two subcommands available:",
+                                                "\tregions: Display regions Centarra supports.",
+                                                "\tplans: Display information on plans available for purchase in these regions. This includes plan ID, name, and price (in USD) by default",
+                                                "Flags (`plans' subcommand only):",
+                                                "\t-l, --ip-limits: Display IPv4 and IPv6 limits on a certain plan",
+                                                "\t-b, --btc-price: Display the price of a plan in BTC",
+                                                "\t-S, --swap: Display the amount of swap that would be allocated to this plan",
+                                                "\t-M, --memory: Display the amount of memory this plan would be allocated (also included in plan names)",
+                                                "\t-D, --disk: Display the disk space allocated to this plan"))
 def available(args, flags):
     reply = centarra('/vps/signup')
-    for i in available['regions']:
+    for i in reply['regions']:
         if not i['name'] in substitutes:
             substitutes[i['name']] = [str(i['id']), False]
-    for i in available['resource_plans']:
+    for i in reply['resource_plans']:
         if not i['name'] in substitutes:
             substitutes[i['name']] = [str(i['id']), False]
     dump_subs()
     if args[0] == "regions":
-        pass
+        return JsonResponse(reply['regions'], '\r\n'.join(["(%s): %s" % (i['id'], i['name']) for i in reply['regions']]))
     else:
-        pass
-    return JsonResponse(reply, "")
+        rpl = []
+        for i in reply['resource_plans']:
+            rpl.append(("({id}) '{name}' - ${price_usd}" + (" ({price_btc} BTC)" if 'b' in flags else "") + "."
+                       + ("\tIPv4 limit {ipv4_limit}, IPv6 limit {ipv6_limit}" if "l" in flags else "")
+                       + ("\tSwap {swap}mb" if 'S' in flags else "")
+                       + ("\tMemory {memory}mb" if 'M' in flags else "")
+                       + ("\tDisk {disk}gb" if 'D' in flags else "")
+            ).format(**i))
+        return JsonResponse(reply, '\r\n'.join(rpl))

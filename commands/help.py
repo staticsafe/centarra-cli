@@ -18,5 +18,5 @@ def help(args, flags):
                 rply += "`%s': %s\r\n" % (cmd, hook.commands[cmd]['doc'][0])
         return rply
     if command in hook.commands:
-        return '\r\n'.join(hook.commands[command]['doc'])
+        return '\r\n' + ('\r\n'.join(hook.commands[command]['doc'])) + '\r\n'
     return language['help']['command_not_found']
