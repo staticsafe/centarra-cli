@@ -93,7 +93,7 @@ def signup(args, flags):
 
 
 flags = HookFlags(i="ips")
-@hook.command("vps info", args_amt=1, doc=("View detailed information regarding your vServer.",
+@hook.command("vps info", args_amt=1, flags=flags, doc=("View detailed information regarding your vServer.",
                                             "Flags:"
                                             "\t-i, --ips: Display information on this server's IP addresses",
                                             "Usage:",
@@ -107,7 +107,48 @@ def info(args, flags):
     rpl = "\r\nServer {id} - {name} (\"{nickname}\")" + \
         "\r\n\t{name} is on node {node} with {cpu_sla} CPU SLA status." + \
         "\r\n\t{name} has {memory}mb memory, {swap}mb swap, and {disk}gb disk space." + \
-        "\r\n\t{name} is{w} being monitored, and had MAC address {mac}" + \
+        "\r\n\t{name} is{w} being monitored, and has MAC address {mac}" + \
         "\r\n\t{name} is allowed {ipv6_limit} IPv6 addresses and {ipv4_limit} IPv4 addresses." + \
           (''.join(["\r\n\tIt has IPv{x} address {ip} (id {id})".format(x=i['ipnet']['version'], **i) for i in service['ips']]) if 'i' in flags else '')
     return JsonResponse(reply, rpl.format(**service))
+
+
+@hook.command("vps templates", args_amt=1, doc=("Display all vps templates available for deployment",
+                                                "This will display all of the names of the xml files available that you can send to the `vps deploy' command.",
+                                                "The short names of the deployment templates will also be set as variables pointing to their template names, if the name is not already taken.",
+                                                "Usage:",
+                                                "\tvps templates <vps_id>"))
+def templates(args, flags):
+    reply = centarra('/vps/%s/deploy' % args[0])
+    for i in reply['templates']:
+        sub(reply['templates'][i]['name'], i)
+    return JsonResponse(reply, "Templates:\r\n" + '\r\n'.join(["\t%s = %s" % (i, reply['templates'][i]['name']) for i in reply['templates']]))
+
+intent = ['64bit-pvm', '32bit-pvm', 'hvm', 'rescue']  # current intents allowed to be sent
+
+flags = HookFlags(v=('virtualization', True), s='start')
+@hook.command("vps deploy", doc=("Deploy your vps with an image so you can start it up.",
+                                 "\tWARNING: This process is destructive, and if you deploy an existing vServer, you may lose all data.",
+                                 "\tCentarra staff members are not responsible for this data, so be careful.",
+                                 "Flags:",
+                                 "\t-v, --virtualization <64bit-pvm|32bit-pvm|hvm|rescue>: Change the virtualization type of your vServer. Default is 64bit-pvm",
+                                 "\t-s, --start: Start your vps immediately after finishing deployment",
+                                 "Usage:",
+                                 "vps deploy <vps_id> <image_name> <root_password> [-v virtualization] [-s]"))
+def deploy(args, flags):
+    send = {}
+    if 's' in flags:
+        send['startvps'] = "on"
+    if 'v' in flags:
+        if flags['v'] in intent:
+            send['intent'] = flags['v']
+        else:
+            print("Warning: virtualization type is unknown - ignoring value %s" % flags['v'])
+    reply = centarra('/vps/%s/deploy' % args[0], imagename=args[1], rootpass=args[2], **send)
+
+    return JsonResponse(reply, "Your vServer #{vps} is being deployed with the image name {image}, root password {pw}".format(
+        vps=args[0], image=args[1], pw=''.join(['*' for a in args[2]]))
+                               + ('\r\n' if 'intent' in send or 's' in flags else "")
+                               + (("Using virtualization type %s" % send['intent']) if 'intent' in send else '')
+                               + ("; " if 'intent' in send and 's' in flags else "")
+                               + ("Starting VPS after install completes" if 's' in flags else ""))  # TODO what did I just write. also fix ' and " differences everywhere.

@@ -12,4 +12,4 @@ def dump_subs():
 def sub(var, val, multiword=False):
     if not var in substitutes:
         substitutes[var] = [val, multiword]
-    dump_subs()
+        dump_subs()
