@@ -151,4 +151,4 @@ def deploy(args, flags):
                                + ('\r\n' if 'intent' in send or 's' in flags else "")
                                + (("Using virtualization type %s" % send['intent']) if 'intent' in send else '')
                                + ("; " if 'intent' in send and 's' in flags else "")
-                               + ("Starting VPS after install completes" if 's' in flags else ""))  # TODO what did I just write. also fix ' and " differences everywhere.
+                               + ("Starting VPS after install completes" if 's' in flags else ""))  # TODO that's awful logic control. also fix ' and " differences... everywhere.
