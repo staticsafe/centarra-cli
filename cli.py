@@ -32,7 +32,11 @@ def completer(text, state):
 
 readline.parse_and_bind("tab: complete")
 readline.set_completer(completer)
-readline.read_history_file("languages/.cli_history")
+
+try:
+    readline.read_history_file("languages/.cli_history")
+except:
+    pass
 
 try:
     while True:
