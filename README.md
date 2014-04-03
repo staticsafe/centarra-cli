@@ -55,11 +55,11 @@ This hook takes five arguments:
 ```
  - flags: (optional, empty `HookFlags()` object if unspecified) A HookFlags (in utils module, `from utils import HookFlag`) object that holds all the flags that this command can accept.
   - HookFlags takes a list of arguments in the form of `HookFlags(s=('longname', True|False), ...)`. `s` is the short flag name, 'longname' is the long flag name (`--longname` or `-s`), and the boolean value is if the command should accept an argument or not.
-  - The tuple is not required if only one part is needed - so s='longname' is valid, as is s=True. By default, flags don't accept parameters.
+  - The tuple is not required if only one part is needed - so `s='longname'` is valid, as is `s=True`. By default, flags don't accept parameters.
 ```python
-@hook.command("my command", HookFlags(r=("reset", False))) # -r or --reset, doesn't take an argument
-@hook.command("my command", HookFlags(h=("hello", True)))  # -h or --hello, takes an argument
-@hook.command("my command", HookFlags(b="balloon", c=True, y=("yes", True)))
+@hook.command("my command", flags=HookFlags(r=("reset", False))) # -r or --reset, doesn't take an argument
+@hook.command("my command", flags=HookFlags(h=("hello", True)))  # -h or --hello, takes an argument
+@hook.command("my command", flags=HookFlags(b="balloon", c=True, y=("yes", True)))
 # ^ chain arguments. -b is --balloon, takes no args. -c, takes an arg. -y or --yes, takes an arg.
 @hook.command("my command")  # accepts no flags
 ```
