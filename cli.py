@@ -53,13 +53,9 @@ def shell():
 def main():
     if len(sys.argv) < 2:
         shell()
-    elif sys.argv[1] == "read":
-        try:
-            while True:
-                line = raw_input('')
-                print(hook.dispatch(line))
-        except EOFError:
-            pass
+    elif sys.argv[1] == "-":
+      for line in sys.stdin.readlines():
+        print(hook.dispatch(line))
     else:
         line = ' '.join(sys.argv[1:])
         print(hook.dispatch(line))
