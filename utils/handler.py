@@ -128,10 +128,14 @@ class HookManager():
                         print("Flag %s is unknown to this command." % j[1])
                         continue
                     if j[1] is True:
-                        i += 1
-                        flags[j[0]] = args[i]  # TODO don't let IndexErrors happen
-                        args[i] = None
-                        continue
+                        if i+1 in args:
+                            i += 1
+                            flags[j[0]] = args[i]
+                            args[i] = None
+                            continue
+                        else:
+                            print("Flag %s was expecting an argument but was not provided with one; ignoring." % j[1])
+                            continue
                     flags[j[0]] = True
             i += 1
         args = [x for x in args if x is not None]
