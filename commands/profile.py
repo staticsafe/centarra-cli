@@ -2,7 +2,8 @@ from utils import hook, HookFlags, JsonResponse
 from libs import centarra
 
 
-@hook.command('profile password', args_amt=1, doc=("Change your password in the panel."
+@hook.command('profile password', args_amt=1, doc=("Change your password in the panel.",
+                                                   "Usage:",
                                                    "\t`profile password <password>'",))
 def password(args, flags):
     reply = centarra('/profile/password', newpass=args[0])
@@ -10,7 +11,8 @@ def password(args, flags):
 
 
 @hook.command('profile webhook-uri', args_amt=1,
-              doc=("Change your webhook URI for job updates.", "\t`profile webhook-uri <uri>'"))
+              doc=("Change your webhook URI for job updates.",
+                                                   "Usage:", "\t`profile webhook-uri <uri>'"))
 def webhook_uri(args, flags):
     reply = centarra('/profile/webhook-uri', webhook_uri=args[0])
     return JsonResponse(reply, "Your webhook has been successfully changed.")
@@ -18,6 +20,7 @@ def webhook_uri(args, flags):
 
 @hook.command('profile contact', args_amt=10,
               doc=("Change your contact information.",
+                   "Usage:",
                    "\t`profile contact <email> <organization> <contact_name> <address1> " +
                    "<address2> <city> <state> <country> <phone> <zip>'"))
 def profile_contact(args, flags):
@@ -44,6 +47,7 @@ def profile_contact(args, flags):
                                           "This will likely make this cli unusable, since we need the new key to continue.",
                                           "Centarra does not supply us with the new key after this command, " +
                                           "so you will have to log in to receive the new key.",
+                                          "Usage:",
                                           "\t`profile new-api-key'"))
 def new_api_key(args, flags):
     reply = centarra('/profile/new-apikey')
@@ -54,10 +58,11 @@ def new_api_key(args, flags):
 flags = HookFlags(s='success', f='fail')
 
 @hook.command("profile login-preferences", doc=("Change your login preferences, so you don't receive e-mails for certain log-in events.",
-                                                    "Providing a flag means you want to receive e-mails for that event",
-                                                    "Available Flags:",
+                                                    "Providing a flag means you want to receive e-mails for that event.",
+                                                    "Flags:",
                                                     "\t -s, --success: Allow the panel to send e-mails when a user successfully logs in",
                                                     "\t -f, --fail: Allow the panel to send e-mails when a user attempts to log in, but fails",
+                                                    "Usage:",
                                                     "\t`profile set-login-preferences [-st]'"))
 def login_preferences(args, flags):
     preferences = {
