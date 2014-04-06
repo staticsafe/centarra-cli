@@ -30,3 +30,4 @@ from commands.help import *
 from commands.builtin import *
 from commands.dns import *
 from commands.invoice import *
+from commands.incidents import *

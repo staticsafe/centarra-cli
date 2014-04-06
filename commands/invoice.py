@@ -1,5 +1,5 @@
 from utils import hook, HookFlags, JsonResponse
-from libs import centarra, sub
+from libs import centarra
 from utils.date import pretty_date
 
 flags = HookFlags(l="long")
