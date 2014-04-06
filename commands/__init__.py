@@ -28,3 +28,4 @@ from commands.profile import *
 from commands.vps import *
 from commands.help import *
 from commands.builtin import *
+from commands.dns import *
