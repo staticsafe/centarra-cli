@@ -12,7 +12,9 @@ This can be done easily with the PIP Python package manager:
 sudo pip install requests
 ```
 
-We'll make this optional at some point
+We'll make this optional at some point.
+
+You're also going to need to rename `config.sample.json` to `config.json` before running the program, in order to provide the CLI with the information it needs to work properly.
 
 ### Usage
 
