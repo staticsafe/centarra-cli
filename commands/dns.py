@@ -7,6 +7,7 @@ flags = HookFlags(l="long")
 
 @hook.command('dns zones', flags=flags, doc=("View all domain zones associated with your account.",
                                              "This will display a short summary of all domains that are listed in your account.",
+                                             "All domains will be aliased to their IDs as variables if they are not already set.",
                                              "Flags:",
                                              "\t-l, --long: Display detailed information regarding each zone",
                                              "Usage:",
@@ -15,6 +16,7 @@ def zones(args, flags):
     reply = centarra('/dns/zones')
     resp = []
     for zone in reply['zones']:
+        sub(zone['name'], zone['id'])
         a = "Zone #{id} - {name}, owned by {user}, with {x} records assigned.".format(x=len(zone['records']), **zone)
         if 'l' in flags:
             a += "\r\n\tID\t\tType\t\tPriority\tTTL\t\tContent"
@@ -28,6 +30,7 @@ flags = HookFlags(p="priority", t="ttl")
 
 @hook.command('dns zone', args_amt=1, flags=flags, doc=("Display detailed information about a specific DNS zone.",
                                                         "This will display all available information about the dns zone specified.",
+                                                        "No records will be aliased to their IDs because of the lack of a unique key to use.",
                                                         "Flags:",
                                                         "\t-p, --priority: Display the priority of each DNS record in this zone",
                                                         "\t-t, --ttl: Display the time-to-live (TTL) of each DNS record in this zone",
@@ -36,6 +39,7 @@ flags = HookFlags(p="priority", t="ttl")
 def zone(args, flags):
     reply = centarra('/dns/zone/%s' % args[0])
     zone = reply['zone']
+    sub(zone['name'], zone['id'])
     a = "Zone #{id} - {name}, owned by {user}, with {x} records assigned".format(x=len(zone['records']), **zone)
     a += "\r\n\tID\t\tType\t\t" \
          + ("Priority\t" if 'p' in flags else "") \
