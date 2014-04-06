@@ -26,7 +26,6 @@ def zones(args, flags):
 
 flags = HookFlags(p="priority", t="ttl")
 
-
 @hook.command('dns zone', args_amt=1, flags=flags, doc=("Display detailed information about a specific DNS zone.",
                                                         "This will display all available information about the dns zone specified.",
                                                         "Flags:",

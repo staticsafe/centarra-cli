@@ -5,9 +5,9 @@ from libs import substitutes
 
 
 class HookFlags():
-    dct = {}
 
     def __init__(self, **kwargs):  # param is if it requires a parameter. long is the long version of the flag.
+        self.dct = {}
         for i in kwargs:
             tmp = {}
             t = kwargs[i]
