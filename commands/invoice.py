@@ -1,6 +1,7 @@
 from utils import hook, HookFlags, JsonResponse
 from libs import centarra
 from utils.date import pretty_date
+import math
 
 flags = HookFlags(l="long")
 
@@ -13,14 +14,17 @@ def list(args, flags):
     reply = centarra("/invoice/list")
     resp = []
     for i in reply['invoices']:
-        a = ("{invoice} - Owned by {user}, total of {total}. Created {cr}"
+        a = ("{invoice}\t\tBy {user}\t\tBalance {total}\t\tCreated {cr}"
             + (", paid {pa}." if i['payment_ts'] is not None else ".")).format(
                 cr=pretty_date(i['creation_ts']),
                 pa=pretty_date(i['payment_ts']),
                 **i)
         if 'l' in flags:
             for j in i['items']:
-                a += "\r\n\t{line_item} - \"{description}\" ({price}) - {ts}".format(ts=pretty_date(j['entry_ts']), **j)
+                a += "\r\n\t{line_item}\t${price}\t\t{ts}\t\"{description}\"".format(
+                    ts=pretty_date(j['entry_ts']),
+                    **j)
+            a += "\r\n" + "-" * 30
         resp.append(a)
     return JsonResponse(reply, "\r\n".join(resp))
 
@@ -29,7 +33,17 @@ def list(args, flags):
                                                "\t`invoice view <invoice_id>'"))
 def view(args, flags):
     reply = centarra("/invoice/%s" % args[0])
-    return JsonResponse(reply, "")
+    i = reply['invoice']
+    a = ("{invoice}\t\tBy {user}\t\tBalance {total}\t\tCreated {cr}"
+            + (", paid {pa}." if i['payment_ts'] is not None else ".")).format(
+                cr=pretty_date(i['creation_ts']),
+                pa=pretty_date(i['payment_ts']),
+                **i)
+    for j in i['items']:
+        a += "\r\n\t{line_item}\t${price}\t\t{ts}\t\"{description}\"".format(
+            ts=pretty_date(j['entry_ts']),
+            **j)
+    return JsonResponse(reply, a)
 
 
 @hook.command("invoice credit", args_amt=lambda x: len(x) == (2 if x[0] == "add" else 0),
