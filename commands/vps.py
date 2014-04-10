@@ -1,5 +1,6 @@
 from utils import hook, HookFlags, JsonResponse
 from libs import centarra, substitutes, sub
+from utils.domain import is_valid_host
 
 flags = HookFlags(l='ip-limits', s='sla', i='ips', m='mac', u='user', w='watchdog', M='memory', S='swap', D='disk')
 
@@ -113,7 +114,7 @@ def info(args, flags):
     return JsonResponse(reply, rpl.format(**service))
 
 
-@hook.command("vps templates", args_amt=1, doc=("Display all vps templates available for deployment",
+@hook.command("vps templates", args_amt=1, doc=("Display all vps templates available for deployment.",
                                                 "This will display all of the names of the xml files available that you can send to the `vps deploy' command.",
                                                 "The short names of the deployment templates will also be set as variables pointing to their template names, if the name is not already taken.",
                                                 "Usage:",
@@ -127,7 +128,7 @@ def templates(args, flags):
 intent = ['64bit-pvm', '32bit-pvm', 'hvm', 'rescue']  # current intents allowed to be sent
 
 flags = HookFlags(v=('virtualization', True), s='start')
-@hook.command("vps deploy", doc=("Deploy your vps with an image so you can start it up.",
+@hook.command("vps deploy", flags=flags, doc=("Deploy your vps with an image so you can start it up.",
                                  "\tWARNING: This process is destructive, and if you deploy an existing vServer, you may lose all data.",
                                  "\tCentarra staff members are not responsible for this data, so be careful.",
                                  "Flags:",
@@ -152,3 +153,119 @@ def deploy(args, flags):
                                + (("Using virtualization type %s" % send['intent']) if 'intent' in send else '')
                                + ("; " if 'intent' in send and 's' in flags else "")
                                + ("Starting VPS after install completes" if 's' in flags else ""))  # TODO that's awful logic control. also fix ' and " differences... everywhere.
+
+
+flags = HookFlags(p=("plan", True), s="short-plans")
+@hook.command("vps stock", flags=flags, doc=("View the stock of each plan in each region.",
+                                             "This will be displayed as all the stock under each region, unless -p is specified."
+                                             "Flags:",
+                                             "\t-p, --plan <name>: Display stock for the plan matching that name",
+                                             "\t-s, --short-plans: Display a shortened name for each plan",
+                                             "Usage:",
+                                             "\t`vps stock'"))
+def stock(args, flags):
+    reply = centarra("/vps/stock.json")
+    if 'p' in flags:
+        plan = False
+        res = {}
+        for region in reply:
+            if not plan:
+                for plan_amt in reply[region]:
+                    if flags['p'] in plan_amt:
+                        plan = plan_amt
+                        res[region] = reply[region][plan_amt]
+                        break
+            else:
+                res[region] = reply[region][plan]
+        return JsonResponse(reply, ("%s: \r\n" % plan) + "\r\n".join(["\t%s: %s" % (i, res[i]) for i in res]))
+
+
+@hook.command("vps nick", args_amt=2, doc=("Sets the nickname of your vps.",
+                                           "If your nickname is improperly formatted, it will be cleared.",
+                                           "Usage",
+                                           "\t`vps nick <vps_id> <nickname>'"))
+def nick(args, flags):
+    reply = centarra("/vps/%s/setnickname" % args[0], nickname=args[1])
+    rpl = "The nickname of vps \"%s\" (#%s) is now set to \"%s\"" % (reply['name'], args[0], reply['nickname'])
+    return JsonResponse(reply, rpl)
+
+# I can't figure out if setprofile is needed or not.
+
+@hook.command("vps monitoring", args_amt=2, doc=("Enable or disable 'Watchdog' monitoring on your vServer.",
+                                                  "Watchdog monitoring will boot your server back up when it is down.",
+                                                  "To enable watchdog monitoring, use the parameter 'enable' - similarly, 'disable' disabled watchdog monitoring.",
+                                                  "Usage:",
+                                                  "\t`vps monitoring <vps_id> (enable|disable)'"))
+def monitoring(args, flags):
+    if args not in ['enable', 'disable']:
+        return "Invalid monitoring status! - use either 'enable' or 'disable' after the vps_id argument."
+    reply = centarra("/vps/%s/monitoring/%s" % (args[0], args[1]))
+    return JsonResponse(reply, "Watchdog monitoring is being {enable}d".format(enable=args[1]))  # enabled, disabled.
+
+@hook.command("vps delete", args_amt=1, doc=("Destroy a vServer from your account.",
+                                             "This command will erase a vServer, and refund your account the unused balance on the remaining time before renewal.",
+                                             "Obviously, this operation is destructive, and will not be recoverable - use with extreme caution.",
+                                             "Usage:",
+                                             "\t`vps delete <vps_id>'"))
+def delete(args, flags):
+    reply = centarra("/vps/%s/delete" % args[0])
+    return JsonResponse(reply, "Your vServer has been destroyed.")
+
+@hook.command("vps renew", args_amt=1, doc=("Create a new invoice under your vServer, which will add one month of credit to your expiry date.",
+                                            "If you have enough service credit to pay for the invoice, the invoice will be marked as paid automatically.",
+                                            "Usage:",
+                                            "\t`vps renew <vps_id>'"))
+def renew(args, flags):
+    reply = centarra("/vps/%s/renew" % args[0])
+    if 'invoice_id' in reply:
+        return JsonResponse(reply, "A new invoice has been created, ID %s" % reply['invoice_id'])
+    return JsonResponse(reply, "A new invoice has been created and paid for with service credit.")
+
+@hook.command("vps boot", args_amt=1, doc=("Boot up a vServer that is currently offline.",
+                                           "Usage:",
+                                           "\t`vps boot <vps_id>'"))
+def create(args, flags):  # I don't know if I should allow specifying a KernelProfile, I don't know where they come from
+    reply = centarra("/vps/%s/create" % args[0])
+    return JsonResponse(reply, "Your boot is in progress (Job ID: %s)" % reply['job'])
+
+@hook.command("vps rescue", args_amt=1, doc=("Boot your vServer into rescue mode.",  # stolen documentation from Centarra.
+                                             "Rescue mode is used to perform manual recovery operations on your VPS,",
+                                             "\tsuch as resetting the root password or taking a backup from a compromised machine.",
+                                             "Your VPS will be powered off and restarted into the recovery environment.",
+                                             "Once you are finished perfoming recovery tasks, simply reboot the VPS through the panel,",
+                                             "\tand the normal configuration will take effect.",
+                                             "We strongly suggest saving any open files to disk and shutting down any",
+                                             "\tdatabase software before launching rescue mode if the VPS is powered on.",
+                                             "Usage:",
+                                             "\t`vps rescue <vps_id>'"))
+def rescue(args, flags):
+    reply = centarra("/vps/%s/start-rescue" % args[0])
+    return JsonResponse(reply, "Your request to boot into rescue mode has been queued.")
+
+flags = HookFlags(f="forceful")
+@hook.command("vps shutdown", flags=flags, args_amt=1, doc=("Shut down your vServer.",
+                                               "Flags:",
+                                               "\t-f, --forceful: Shut down the server forcefully, using the xl destroy command.",
+                                               "Usage:",
+                                               "\t`vps shutdown <vps_id>'"))
+def shutdown(args, flags):
+    cmd = "destroy" if 'f' in flags else "shutdown"
+    reply = centarra("/vps/%s/%s" % (args[0], cmd))
+    return JsonResponse(reply, "Your request to shutdown has been queued (Job ID: %s)." % reply['job'])
+
+@hook.command("vps powercycle", args_amt=1, doc=("Forcefully power-cycle your vServer",
+                                                 "This is equivilent to forcefully shutting your vps down and restarting it.",
+                                                 "Usage:",
+                                                 "\t`vps powercycle <vps_id>'"))
+def powercycle(args, flags):
+    reply = centarra("/vps/%s/powercycle" % args[0])
+    return JsonResponse(reply, "Your request to powercycle has been queued (Job ID: %s)." % reply['job'])
+
+@hook.command("vps stats", args_amt=4, doc=("A json-only way to access graph data in the panel.",
+                                            "Available stats are include netstats, cpustats, and vbdstats.",
+                                            "Usage:",
+                                            "\t`vps stats <vps_id> (cpustats|netstats|vbdstats) <start> <step>'"))
+def stats(args, flags):
+    return centarra("/vps/{}/{}/{}/{}".format(*args))
+
+
