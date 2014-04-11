@@ -24,6 +24,7 @@ def first_command(args, flags):  # flags is passed as a Flags object. args is a 
     return CommandError('color?', 'Your Error, how to fix it.')
 """
 
+from commands.vpsconsole import *
 from commands.profile import *
 from commands.vps import *
 from commands.help import *

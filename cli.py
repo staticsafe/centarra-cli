@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+import commands
+
 import os
 import json
 
@@ -9,7 +11,6 @@ if not os.path.exists('libs/substitutes.json'):
     with open('libs/substitutes.json', 'w+') as out:
         json.dump({}, out)
 
-import commands
 from utils import hook
 import sys
 from utils import config
