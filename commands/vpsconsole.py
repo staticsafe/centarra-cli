@@ -24,6 +24,13 @@ def enable_echo(fd, enabled):
         tty.setcbreak(fd, termios.TCSANOW)
     else:
         tty.setraw(fd, termios.TCSANOW)
+    (iflag, oflag, cflag, lflag, ispeed, ospeed, cc) = termios.tcgetattr(fd)
+    if enabled:
+        lflag |= termios.ECHO
+    else:
+        lflag &= ~termios.ECHO
+    new_attr = [iflag, oflag, cflag, lflag, ispeed, ospeed, cc]
+    termios.tcsetattr(fd, termios.TCSANOW, new_attr)
 
 class VPSArgsObject:
     def __init__(self):
