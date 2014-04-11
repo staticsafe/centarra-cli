@@ -306,7 +306,7 @@ def ip_manage(args, flags):
         reply = centarra("/vps/{}".format(vps_id))
         rpl = []
         for ip in reply['service']['ips']:
-            rpl.append("#{}: IPv{} address {}\tBroadcast {}\tNetmask {}\tGateway {}\t Network {}".format(
+            rpl.append("#{}: IPv{} address {} | Broadcast {} | Netmask {} | Gateway {} | Network {}".format(
                 ip["id"],
                 ip['ipnet']['version'],
                 ip['ip'],
@@ -319,3 +319,4 @@ def ip_manage(args, flags):
         vps_id = args[0]
         return "This operation is currently unavailable due to a pending pull request on the panel - we have no way to fetch this information."
     return "Unknown IP operation '{}'.".format(oper)
+
