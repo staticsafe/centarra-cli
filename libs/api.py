@@ -17,4 +17,9 @@ def centarra(url, **kwargs):
     try:
         return r.json()
     except:  # TODO vague, simplejson.decoder.JSONDecodeError
-        raise ValueError("JSON data was not returned by Centarra. Data recieved: %s" % r.text)
+        #raise ValueError("JSON data was not returned by Centarra. Data recieved: %s" % r.text)
+        raise ApiError(r.status_code)
+
+class ApiError(Exception):
+    def __init__(self, code):
+        self.code = code

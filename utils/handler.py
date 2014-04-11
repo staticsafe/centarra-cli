@@ -2,6 +2,7 @@ from utils.config import language
 from shlex import split
 import json
 from libs import substitutes
+from libs.api import ApiError
 
 
 class HookFlags():
@@ -148,8 +149,15 @@ class HookManager():
             if not command['args_amt'](args):
                 return language['incorrect_arguments']
 
-        response = command['function'](args, flags)
-
+        try:
+            response = command['function'](args, flags)
+        except ApiError as e:
+            try:
+                return {
+                    404: "Error: The page requested was not found on Centarra's servers. Perhaps a command argument was malformed or you're running an old version of Centarra-CLI?",
+                    403: "Error: The requested page responded with a 403 Forbidden error code. Perhaps an incorrect ID was supplied in a command, or you're attempting to access resources that aren't yours?"}[e.code]
+            except KeyError:
+                return "An unexpected error occurred while executing this command, and the information provided by Centarra is unreadable by us. Perhaps a command argument was malformed or Centarra is undergoing maintenance?"
         if isinstance(response, JsonResponse):
             if wants_json:
                 return response.js()
