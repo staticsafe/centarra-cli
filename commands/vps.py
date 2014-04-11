@@ -266,6 +266,56 @@ def powercycle(args, flags):
                                             "Usage:",
                                             "\t`vps stats <vps_id> (cpustats|netstats|vbdstats) <start> <step>'"))
 def stats(args, flags):
+    if not args[2] in ["cpustats", "netstats", "vbdstats"]:
+        return "Error: your second argument must be the type of graph data you are trying to fetch."
     return centarra("/vps/{}/{}/{}/{}".format(*args))
 
 
+@hook.command("vps ip", args_amt=lambda x: len(x) >= 2 and len(x) == 2 + {"available": 0, "list": 0, "add": 2, "rdns": 2, "delete": 1}[x[1]],
+              doc=("Manage vServer IP addresses.",
+                    "This command allows you to modify rDNS records, add new IPs, list current IPs, or delete IP addresses.",
+                    "Subcommands:",
+                    "\t`available': Display a list of available IP addresses that can be used in the `add' command.",
+                    "\t`list': Display a list of current IP addresses attached to your account.",
+                    "\t`add': Add a new IP address to your vServer. This required both the net_id from available and the actual address.",
+                    "\t`rdns': Set a rDNS record on a specific IP address.",
+                    "\t`delete': Remove an IP address permenently from your vServer.",
+                    "Usage:",
+                    "\t`vps ip <vps_id> (available|list|add <net_id> <ip_addr>|rdns <ip_id> <record_value>|delete <ip_id>)'"))
+def ip_manage(args, flags):
+    oper = args.pop(1)
+    if oper == "add":
+        vps_id, net_id, ip = tuple(args)
+        reply = centarra("/vps/{}/admin/ip/add".format(vps_id), ipbox="{}!{}".format(net_id, ip))
+        # I guess we may as well be nice and check if the IP was adding... otherwise they reached their quota.
+        for existing_ip in reply['service']['ips']:
+            if existing_ip["ip"] == ip:
+                return JsonResponse(reply, "IP address {} was successfully added to your vServer (IP ID {})".format(ip, existing_ip['id']))
+        return JsonResponse(reply, "We were unable to add the requested IP address to your vServer. Have you reached your IP quota?")
+    elif oper == "rdns":
+        vps_id, ip_id, rdns = tuple(args)
+        reply = centarra("/vps/{}/admin/ip/{}/rdns-modify".format(vps_id, ip_id), rdns=rdns)
+        if not is_valid_host(rdns):
+            return JsonResponse(reply, "IP rDNS was likely not set correctly due to malformation in input.")
+        return JsonResponse(reply, "IP rDNS was successfully set on your IP address.")
+    elif oper == "delete":
+        vps_id, ip_id = tuple(args)
+        return JsonResponse(centarra("/vps/{}/admin/ip/{}/delete".format(vps_id, ip_id)), "Your IP address has been successfully deleted.")
+    elif oper == "list":
+        vps_id = args[0]
+        reply = centarra("/vps/{}".format(vps_id))
+        rpl = []
+        for ip in reply['service']['ips']:
+            rpl.append("#{}: IPv{} address {}\tBroadcast {}\tNetmask {}\tGateway {}\t Network {}".format(
+                ip["id"],
+                ip['ipnet']['version'],
+                ip['ip'],
+                ip['ipnet']['broadcast'],
+                ip['ipnet']['netmask'],
+                ip['ipnet']['gateway'],
+                ip['ipnet']['network']))
+        return JsonResponse(reply, "\r\n".join(rpl))
+    elif oper == "available":
+        vps_id = args[0]
+        return "This operation is currently unavailable due to a pending pull request on the panel - we have no way to fetch this information."
+    return "Unknown IP operation '{}'.".format(oper)
