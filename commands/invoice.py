@@ -46,7 +46,7 @@ def view(args, flags):
     return JsonResponse(reply, a)
 
 
-@hook.command("invoice credit", args_amt=lambda x: len(x) == (2 if x[0] == "add" else 0),
+@hook.command("invoice credit", args_amt=lambda x: not x or len(x) == (2 if x[0] == "add" else 0),
               doc=("View or edit the amount of service credit you have in your account.",
                    "All arguments can be omitted if you intend to view your credit.",
                    "The argument when adding credit must be above $1.00, and formatted like a float.",
@@ -54,14 +54,14 @@ def view(args, flags):
                    "\t`invoice credit'"
                    "\t`invoice credit add <amount>'"))
 def credit(args, flags):
-    if args[0] == "add":
+    if args and args[0] == "add":
         reply = centarra("/invoice/svccredit", creditamt=args[1])
         if "invoices" in reply:
             return JsonResponse(reply, "Adding service credit failed. Make sure your value was formatted correctly and is over $1.00.")
-        return JsonResponse(reply, "Invoice {invoice} was created for a value of {price}. See `invoice view {invoice}' for more information.".format(**(reply['invoice'])))
+        return JsonResponse(reply, "Invoice {invoice} was created for a value of {total}. See `invoice view {invoice}' for more information.".format(**(reply['invoice'])))
     else:
         reply = centarra("/invoice/service_credit.json")
-        return JsonResponse(reply, "User {username} has ${total] in total service credit.")
+        return JsonResponse(reply, "User {username} has ${total} in total service credit.".format(**reply))
 
 @hook.command("invoice resend", args_amt=1, doc=("Resend an e-mail to yourself regarding an invoice.",
                                                  "Usage:",
