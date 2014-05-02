@@ -9,7 +9,7 @@ flags = HookFlags(r=('regex', True), l='long')
                                                                                                 "Once supplied with a command, `help' will return all documentation regarding that command. Any command listed in `help' will return documentation"
                                                                                                 "Flags: (only when no command is supplied)",
                                                                                                 "\t-r, --regex <regex>: filter results by a provided regular expression.",
-                                                                                                "\t-l, --long: explicitly show the entire man-page for all matching commands."
+                                                                                                "\t-l, --long: explicitly show the entire man-page for all matching commands.",
                                                                                                 "Usage:",
                                                                                                 "\t`help [-l] [-r <regex>|<my command>]'"))
 def help(args, flags):
@@ -24,9 +24,11 @@ def help(args, flags):
             if rg is None or rg.search(cmd):
                 reply += _help_append(cmd, hook.commands[cmd], 'l' in flags)
         return reply
+    if hook.commands.get(command, False):
+        return _help_append(command, hook.commands[command], True)
     for c in hook.commands:
         if command in c:
-            reply += _help_append(c, hook.commands[c], True)
+            reply += _help_append(c, hook.commands[c], 'l' in flags)
     return reply or language['help']['command_not_found']
 
 def _help_append(name, command, long):
