@@ -15,10 +15,6 @@ from utils import hook
 import sys
 from utils import config
 
-if not config['centarra_username']:
-    print('Please enter in your Centarra username and api-key before continuing')
-    sys.exit(0)
-
 def completer(text, state):
     options = [i for i in hook.commands if i.startswith(text)]
     if state < len(options):

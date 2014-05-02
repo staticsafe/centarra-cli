@@ -41,10 +41,12 @@ def list(args, flags):
     rpl = '\r\n'.join(rpl)
     return JsonResponse(reply, "Your current vServers: \r\n%s" % rpl)
 
-
+@hook.command("vps test")
+def test(args, flags):
+   return centarra('/vps/signup', a="b")
 flags = HookFlags(l='ip-limits', b='btc-price', S='swap', M='memory', D='disk')
 
-@hook.command("vps available", args_amt=1, flags=flags, doc=("View available vServers that are currently being sold, as well as available regions.",
+@hook.command("vps available", args_amt=lambda x: len(x) <= 1, flags=flags, doc=("View available vServers that are currently being sold, as well as available regions.",
                                                 "All of the available plans are available here - however, see `vps stock' for information on region stock.",
                                                 "This command also sets all resource plan names and region names to variables representing their ids,",
                                                 "Therefore using `$Dallas' in a command will have the value of its region id (if it is not already set). Keep in mind you can quote an argument to retain spaces.",
@@ -65,10 +67,12 @@ def available(args, flags):
         sub(i['name'], i['id'])
     for i in reply['resource_plans']:
         sub(i['name'], i['id'])
-    if args[0] == "regions":
-        return JsonResponse(reply['regions'], '\r\n'.join(["(%s): %s" % (i['id'], i['name']) for i in reply['regions']]))
-    else:
-        rpl = []
+    rpl = []
+    if not args or args[0] == "regions":
+        rpl.append("Available Regions: \r\n")
+        rpl += ["(%s): %s" % (i['id'], i['name']) for i in reply['regions']]
+    if not args or args[0] == "plans":
+        rpl.append("Available Plans: \r\n")
         for i in reply['resource_plans']:
             rpl.append(("({id}) '{name}' - ${price_usd}" + (" ({price_btc} BTC)" if 'b' in flags else "") + "."
                        + ("\tIPv4 limit {ipv4_limit}, IPv6 limit {ipv6_limit}" if "l" in flags else "")
@@ -76,7 +80,8 @@ def available(args, flags):
                        + ("\tMemory {memory}mb" if 'M' in flags else "")
                        + ("\tDisk {disk}gb" if 'D' in flags else "")
             ).format(**i))
-        return JsonResponse(reply, '\r\n'.join(rpl))
+    return JsonResponse(reply, '\r\n'.join(rpl))
+
 
 
 @hook.command("vps signup", args_amt=2, doc=("Sign up for a brand new VPS using information from `vps available'.",
@@ -87,8 +92,12 @@ def available(args, flags):
                                              "Examples:"
                                              "\t`vps signup $Dallas \"$TortoiseCloud 256\"' (after viewing available plans)"))
 def signup(args, flags):
-    reply = centarra('/vps/signup', plan=args[0], region=args[1])
-    sub(reply['name'], reply['id'], False)
+    region = args[0].title()
+
+    reply = centarra('/vps/signup', plan=args[1], region=args[0])
+    if not reply:
+        return JsonResponse(reply, "The selected region did not have enough stock left to satisfy your request. Try using region '0' for a random location.")
+    sub(reply['service']['name'], reply['service']['id'], False)
     return JsonResponse(reply, "Your new vps is now named {name} (#{id}) on node {node}. Deploy it with `vps deploy'!"
                                                 .format(**reply['service']))
 
@@ -178,6 +187,7 @@ def stock(args, flags):
             else:
                 res[region] = reply[region][plan]
         return JsonResponse(reply, ("%s: \r\n" % plan) + "\r\n".join(["\t%s: %s" % (i, res[i]) for i in res]))
+    return JsonResponse(reply, "")  # TODO
 
 
 @hook.command("vps nick", args_amt=2, doc=("Sets the nickname of your vps.",
@@ -303,7 +313,7 @@ def ip_manage(args, flags):
         return JsonResponse(centarra("/vps/{}/admin/ip/{}/delete".format(vps_id, ip_id)), "Your IP address has been successfully deleted.")
     elif oper == "list":
         vps_id = args[0]
-        reply = centarra("/vps/{}".format(vps_id))
+        reply = centarra("/vps/{}/admin".format(vps_id))
         rpl = []
         for ip in reply['service']['ips']:
             rpl.append("#{}: IPv{} address {} | Broadcast {} | Netmask {} | Gateway {} | Network {}".format(
@@ -320,3 +330,6 @@ def ip_manage(args, flags):
         return "This operation is currently unavailable due to a pending pull request on the panel - we have no way to fetch this information."
     return "Unknown IP operation '{}'.".format(oper)
 
+@hook.command("vps rawstats", args_amt=1)
+def rawstats(args, flags):
+    return JsonResponse(centarra("/vps/{}/status.json".format(args[0])), "")

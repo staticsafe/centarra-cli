@@ -101,7 +101,7 @@ class HookManager():
                             break
         if len(args) < 1:
             return ""  # they didn't type a command, let's not yell at them for it
-        if args[0] in ["help", "set", "get"]:  # builtin commands
+        if args[0] in ["help", "set", "get", "delete", "exit"]:  # builtin commands
             command = ' '.join(args[0:1])
             args = args[1:]
         else:
@@ -116,6 +116,7 @@ class HookManager():
         hook_flags = command['flags']
         i = 0
         while i < len(args):
+            args[i] = str(args[i])
             if args[i].startswith("-"):
                 if args[i] == '--json':
                     args[i] = None

@@ -47,3 +47,9 @@ def delete_var(args, flags):
     return "No variable could be found with that name {name}.".format(name=args[0])
 
 # TODO maybe a flag to make the command not substitute variables would be cool?
+
+@hook.command("exit", doc=("Exit the CLI.",))
+def exit(args, flags):
+    import sys
+    print("Exiting Centarra-CLI.")
+    sys.exit(0)
