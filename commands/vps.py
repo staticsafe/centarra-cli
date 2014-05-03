@@ -136,7 +136,7 @@ def templates(args, flags):
 intent = ['64bit-pvm', '32bit-pvm', 'hvm', 'rescue']  # current intents allowed to be sent
 
 flags = HookFlags(v=('virtualization', True), s='start')
-@hook.command("vps deploy", flags=flags, doc=("Deploy your vps with an image so you can start it up.",
+@hook.command("vps deploy", flags=flags, args_amt=3, doc=("Deploy your vps with an image so you can start it up.",
                                  "\tWARNING: This process is destructive, and if you deploy an existing vServer, you may lose all data.",
                                  "\tCentarra staff members are not responsible for this data, so be careful.",
                                  "Flags:",
