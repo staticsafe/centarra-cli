@@ -71,7 +71,7 @@ def available(args, flags):
     if not args or args[0] == "plans":
         rpl.append("Available Plans: \r\n")
         for i in reply['resource_plans']:
-            rpl.append(("({id}) '{name}' - ${price_usd}" + (" ({price_btc} BTC)" if 'b' in flags else "") + "."
+            rpl.append(("({id}) '{name}' - ${price_usd:.2f}" + (" ({price_btc} BTC)" if 'b' in flags else "") + "."
                        + ("\tIPv4 limit {ipv4_limit}, IPv6 limit {ipv6_limit}" if "l" in flags else "")
                        + ("\tSwap {swap}mb" if 'S' in flags else "")
                        + ("\tMemory {memory}mb" if 'M' in flags else "")
@@ -95,7 +95,7 @@ def signup(args, flags):
     if not reply:
         return JsonResponse(reply, "The selected region did not have enough stock left to satisfy your request. Try using region '0' for a random location.")
     if not reply.get('service', False):
-        return JsonResponse(reply, "Your new VPS has been created; please pay invoice {invoice} (${total}) to continue.".format(**reply['invoice']))
+        return JsonResponse(reply, "Your new VPS has been created; please pay invoice {invoice} (${total:.2f}) to continue.".format(**reply['invoice']))
     sub(reply['service']['name'], reply['service']['id'], False)
     return JsonResponse(reply, "Your new vps is now named {name} (#{id}) on node {node}. Deploy it with `vps deploy'!"
                                                 .format(**reply['service']))

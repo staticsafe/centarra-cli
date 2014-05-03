@@ -21,7 +21,7 @@ def list(args, flags):
                 **i)
         if 'l' in flags:
             for j in i['items']:
-                a += "\r\n\t{line_item}\t${price}\t\t{ts}\t\"{description}\"".format(
+                a += "\r\n\t{line_item}\t${price:.2f}\t\t{ts}\t\"{description}\"".format(
                     ts=pretty_date(j['entry_ts']),
                     **j)
             a += "\r\n" + "-" * 30
@@ -40,7 +40,7 @@ def view(args, flags):
                 pa=pretty_date(i['payment_ts']),
                 **i)
     for j in i['items']:
-        a += "\r\n\t{line_item}\t${price}\t\t{ts}\t\"{description}\"".format(
+        a += "\r\n\t{line_item}\t${price:.2f}\t\t{ts}\t\"{description}\"".format(
             ts=pretty_date(j['entry_ts']),
             **j)
     return JsonResponse(reply, a)
@@ -61,7 +61,7 @@ def credit(args, flags):
         return JsonResponse(reply, "Invoice {invoice} was created for a value of {total}. See `invoice view {invoice}' for more information.".format(**(reply['invoice'])))
     else:
         reply = centarra("/invoice/service_credit.json")
-        return JsonResponse(reply, "User {username} has ${total} in total service credit.".format(**reply))
+        return JsonResponse(reply, "User {username} has ${total:.2f} in total service credit.".format(**reply))
 
 @hook.command("invoice resend", args_amt=1, doc=("Resend an e-mail to yourself regarding an invoice.",
                                                  "Usage:",
