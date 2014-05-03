@@ -41,9 +41,6 @@ def list(args, flags):
     rpl = '\r\n'.join(rpl)
     return JsonResponse(reply, "Your current vServers: \r\n%s" % rpl)
 
-@hook.command("vps test")
-def test(args, flags):
-   return centarra('/vps/signup', a="b")
 flags = HookFlags(l='ip-limits', b='btc-price', S='swap', M='memory', D='disk')
 
 @hook.command("vps available", args_amt=lambda x: len(x) <= 1, flags=flags, doc=("View available vServers that are currently being sold, as well as available regions.",
@@ -90,13 +87,15 @@ def available(args, flags):
                                              "Usage:",
                                              "\t`vps signup <region> <plan>'",
                                              "Examples:"
-                                             "\t`vps signup $Dallas \"$TortoiseCloud 256\"' (after viewing available plans)"))
+                                             "\t`vps signup dallas 512' (after viewing available plans)"))
 def signup(args, flags):
     region = args[0].title()
 
     reply = centarra('/vps/signup', plan=args[1], region=args[0])
     if not reply:
         return JsonResponse(reply, "The selected region did not have enough stock left to satisfy your request. Try using region '0' for a random location.")
+    if not reply.get('service', False):
+        return JsonResponse(reply, "Your new VPS has been created; please pay invoice {invoice} (${total}) to continue.".format(**reply['invoice']))
     sub(reply['service']['name'], reply['service']['id'], False)
     return JsonResponse(reply, "Your new vps is now named {name} (#{id}) on node {node}. Deploy it with `vps deploy'!"
                                                 .format(**reply['service']))
