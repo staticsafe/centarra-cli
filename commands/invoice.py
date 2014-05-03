@@ -34,7 +34,7 @@ def list(args, flags):
 def view(args, flags):
     reply = centarra("/invoice/%s" % args[0])
     i = reply['invoice']
-    a = ("{invoice}\t\tBy {user}\t\tBalance {total:.2f}\t\tCreated {cr}"
+    a = ("{invoice}\t\tBy {user}\t\tBalance ${total:.2f}\t\tCreated {cr}"
             + (", paid {pa}." if i['payment_ts'] is not None else ".")).format(
                 cr=pretty_date(i['creation_ts']),
                 pa=pretty_date(i['payment_ts']),

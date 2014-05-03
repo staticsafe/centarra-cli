@@ -81,7 +81,7 @@ def edit_record(args, flags):
     .format(dot="." if args[2] is not "" else "", sub=args[2], content=args[3], id=args[1], **(reply['zone'])))
 
 
-flags = HookFlags(t=("ttl", True), p=("priority", True))
+flags = HookFlags(t={"long": "ttl", "param": True}, p={"long": "priority", "param": True})
 @hook.command("dns add-record", args_amt=lambda x: len(x) == 2 if x[0] == "valid" else len(x) == 4,
               flags=flags, doc=("Add a new record to a DNS zone, or view available records.",
                                 "Using the 'valid' argument, you can view a list of available records to add to your subdomain.",

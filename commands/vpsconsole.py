@@ -126,6 +126,6 @@ try:
         return '[Console detached.]\r'
 
 except ImportError:
-    @hook.command('vps console', args_amt=lambda x: True, doc=("[DISABLED]: Connect to the VPS console."))
+    @hook.command('vps console', args_amt=lambda x: True, doc=("[DISABLED]: Connect to the VPS console.",))
     def vps_cons_removed(args, flags):
         return "This command has been disabled due to import errors. Please see the dependencies listed in the README for more information."

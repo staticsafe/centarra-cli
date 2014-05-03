@@ -3,7 +3,7 @@ from utils import hook, HookFlags
 
 from re import compile
 
-flags = HookFlags(r=('regex', True), l='long')
+flags = HookFlags(r={"long": 'regex', "param": True}, l='long')
 @hook.command('help', args_amt=lambda x: 0 <= len(x) <= 2, flags=flags, return_json=False, doc=("Fetch information regarding a certain command",
                                                                                                 "`help' will, without any arguments, list all commands and a brief idea of what they do.",
                                                                                                 "Once supplied with a command, `help' will return all documentation regarding that command. Any command listed in `help' will return documentation"

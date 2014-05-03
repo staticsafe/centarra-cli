@@ -63,7 +63,7 @@ flags = HookFlags(s='success', f='fail')
                                                     "\t -s, --success: Allow the panel to send e-mails when a user successfully logs in",
                                                     "\t -f, --fail: Allow the panel to send e-mails when a user attempts to log in, but fails",
                                                     "Usage:",
-                                                    "\t`profile set-login-preferences [-st]'"))
+                                                    "\t`profile set-login-preferences [-sf]'"))
 def login_preferences(args, flags):
     preferences = {
         'fail': 1 if 'f' in flags else 0,

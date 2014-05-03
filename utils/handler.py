@@ -9,23 +9,14 @@ class HookFlags():
 
     def __init__(self, **kwargs):  # param is if it requires a parameter. long is the long version of the flag.
         self.dct = {}
-        for i in kwargs:
-            tmp = {}
-            t = kwargs[i]
-            if type(t) is tuple:
-                for j in t:
-                    if j is True:
-                        tmp['param'] = True
-                    elif j is False:
-                        tmp['param'] = False
-                    else:
-                        tmp['long'] = j
-            elif type(t) is bool:
-                tmp['param'] = t
+        for argument in kwargs:
+            value = kwargs[argument]
+            if type(value) is dict:
+                self.dct[argument] = value  # self.dct is a dict of dict{"long": <long version>, "param": <boolean, if it accepts a parameter.>}
+            elif type(value) is bool:
+                self.dct[argument] = {"long": None, "param": value}
             else:
-                tmp['long'] = t
-            tmp = dict({'param': False, 'long': None}.items() + tmp.items())
-            self.dct[i] = tmp
+                self.dct[argument] = {"long": value, "param": False}
 
     def match(self, flag):
         if not flag.startswith('-'):

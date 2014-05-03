@@ -135,7 +135,7 @@ def templates(args, flags):
 
 intent = ['64bit-pvm', '32bit-pvm', 'hvm', 'rescue']  # current intents allowed to be sent
 
-flags = HookFlags(v=('virtualization', True), s='start', p=('password', True))
+flags = HookFlags(v={"long": 'virtualization', "param": True}, s='start', p={"long": 'password', "param": True})
 @hook.command("vps deploy", flags=flags, args_amt=2, doc=("Deploy your vps with an image so you can start it up.",
                                  "See `vps templates' for available templates that can be used for your image name.",
                                  "\tWARNING: This process is destructive, and if you deploy an existing vServer, you may lose all data.",
@@ -170,7 +170,7 @@ def deploy(args, flags):
                                + ("Starting VPS after install completes" if 's' in flags else ""))  # TODO that's awful logic control. also fix ' and " differences... everywhere.
 
 
-flags = HookFlags(p=("plan", True), s="short-plans")
+flags = HookFlags(p={"long": "plan", "param": True}, s="short-plans")
 @hook.command("vps stock", flags=flags, doc=("View the stock of each plan in each region.",
                                              "This will be displayed as all the stock under each region, unless -p is specified."
                                              "Flags:",
@@ -193,7 +193,12 @@ def stock(args, flags):
             else:
                 res[region] = reply[region][plan]
         return JsonResponse(reply, ("%s: \r\n" % plan) + "\r\n".join(["\t%s: %s" % (i, res[i]) for i in res]))
-    return JsonResponse(reply, "")  # TODO
+    res = []
+    for region in reply:
+        res.append("\n" + region)
+        for plan in reply[region]:
+            res.append("{}: {}".format(plan, reply[region][plan]))
+    return JsonResponse(reply, "\n".join(res))
 
 
 @hook.command("vps nick", args_amt=2, doc=("Sets the nickname of your vps.",
@@ -288,7 +293,7 @@ def powercycle(args, flags):
                                             "Usage:",
                                             "\t`vps stats <vps_id> (cpustats|netstats|vbdstats) <start> <step>'"))
 def stats(args, flags):
-    if not args[2] in ["cpustats", "netstats", "vbdstats"]:
+    if not args[1] in ["cpustats", "netstats", "vbdstats"]:
         return "Error: your second argument must be the type of graph data you are trying to fetch."
     return centarra("/vps/{}/{}/{}/{}".format(*args))
 
