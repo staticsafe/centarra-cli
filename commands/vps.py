@@ -137,10 +137,11 @@ intent = ['64bit-pvm', '32bit-pvm', 'hvm', 'rescue']  # current intents allowed 
 
 flags = HookFlags(v=('virtualization', True), s='start')
 @hook.command("vps deploy", flags=flags, args_amt=3, doc=("Deploy your vps with an image so you can start it up.",
+                                 "See `vps templates' for available templates that can be used for your image name.",
                                  "\tWARNING: This process is destructive, and if you deploy an existing vServer, you may lose all data.",
                                  "\tCentarra staff members are not responsible for this data, so be careful.",
                                  "Flags:",
-                                 "\t-v, --virtualization <64bit-pvm|32bit-pvm|hvm|rescue>: Change the virtualization type of your vServer. Default is 64bit-pvm",
+                                 "\t-v, --virtualization <64bit-pvm|hvm|rescue>: Change the virtualization type of your vServer. Default is 64bit-pvm",
                                  "\t-s, --start: Start your vps immediately after finishing deployment",
                                  "Usage:",
                                  "\tvps deploy <vps_id> <image_name> <root_password> [-v virtualization] [-s]"))
