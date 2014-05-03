@@ -211,14 +211,20 @@ def monitoring(args, flags):
     reply = centarra("/vps/%s/monitoring/%s" % (args[0], args[1]))
     return JsonResponse(reply, "Watchdog monitoring is being {enable}d".format(enable=args[1]))  # enabled, disabled.
 
-@hook.command("vps delete", args_amt=1, doc=("Destroy a vServer from your account.",
+@hook.command("vps delete", args_amt=1, flags=HookFlags(y='yes'), doc=("Destroy a vServer from your account.",
                                              "This command will erase a vServer, and refund your account the unused balance on the remaining time before renewal.",
                                              "Obviously, this operation is destructive, and will not be recoverable - use with extreme caution.",
+                                             "Flags:",
+                                             "\t-y, --yes: assume yes to confirmation on deleting your vServer",
                                              "Usage:",
                                              "\t`vps delete <vps_id>'"))
 def delete(args, flags):
-    reply = centarra("/vps/%s/delete" % args[0])
-    return JsonResponse(reply, "Your vServer has been destroyed.")
+    print("Are you sure you would like to delete your vServer?")
+    line = raw_input('[N/y]: ')
+    if line == "y":
+        reply = centarra("/vps/%s/delete" % args[0])
+        return JsonResponse(reply, "Your vServer has been destroyed.")
+    return "Aborted."
 
 @hook.command("vps renew", args_amt=1, doc=("Create a new invoice under your vServer, which will add one month of credit to your expiry date.",
                                             "If you have enough service credit to pay for the invoice, the invoice will be marked as paid automatically.",
