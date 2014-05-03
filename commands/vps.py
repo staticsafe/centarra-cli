@@ -135,18 +135,24 @@ def templates(args, flags):
 
 intent = ['64bit-pvm', '32bit-pvm', 'hvm', 'rescue']  # current intents allowed to be sent
 
-flags = HookFlags(v=('virtualization', True), s='start')
-@hook.command("vps deploy", flags=flags, args_amt=3, doc=("Deploy your vps with an image so you can start it up.",
+flags = HookFlags(v=('virtualization', True), s='start', p=('password', True))
+@hook.command("vps deploy", flags=flags, args_amt=2, doc=("Deploy your vps with an image so you can start it up.",
                                  "See `vps templates' for available templates that can be used for your image name.",
                                  "\tWARNING: This process is destructive, and if you deploy an existing vServer, you may lose all data.",
                                  "\tCentarra staff members are not responsible for this data, so be careful.",
                                  "Flags:",
                                  "\t-v, --virtualization <64bit-pvm|hvm|rescue>: Change the virtualization type of your vServer. Default is 64bit-pvm",
                                  "\t-s, --start: Start your vps immediately after finishing deployment",
+                                 "\t-p, --password: Your new root pasword; if this is not provided, you will be prompted for the password.",
                                  "Usage:",
-                                 "\tvps deploy <vps_id> <image_name> <root_password> [-v virtualization] [-s]"))
+                                 "\tvps deploy <vps_id> <image_name> [-p root_password] [-v virtualization] [-s]"))
 def deploy(args, flags):
     send = {}
+    if 'p' in flags:
+        send['rootpass'] = flags['p']
+    else:
+        import getpass
+        send['rootpass'] = getpass.getpass('Enter root password: ')
     if 's' in flags:
         send['startvps'] = "on"
     if 'v' in flags:
@@ -154,10 +160,10 @@ def deploy(args, flags):
             send['intent'] = flags['v']
         else:
             print("Warning: virtualization type is unknown - ignoring value %s" % flags['v'])
-    reply = centarra('/vps/%s/deploy' % args[0], imagename=args[1], rootpass=args[2], **send)
+    reply = centarra('/vps/%s/deploy' % args[0], imagename=args[1], **send)
 
     return JsonResponse(reply, "Your vServer #{vps} is being deployed with the image name {image}, root password {pw}".format(
-        vps=args[0], image=args[1], pw=''.join(['*' for a in args[2]]))
+        vps=args[0], image=args[1], pw=''.join(['*' for a in send['rootpass']]))
                                + ('\r\n' if 'intent' in send or 's' in flags else "")
                                + (("Using virtualization type %s" % send['intent']) if 'intent' in send else '')
                                + ("; " if 'intent' in send and 's' in flags else "")
