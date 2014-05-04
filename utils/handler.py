@@ -91,7 +91,7 @@ class HookManager():
                             break
         if len(args) < 1:
             return ""  # they didn't type a command, let's not yell at them for it
-        if args[0] in ["help", "set", "get", "delete", "exit"]:  # builtin commands
+        if args[0] in ["help", "exit"]:  # builtin commands
             command = ' '.join(args[0:1])
             args = args[1:]
         else:

@@ -6,7 +6,7 @@ flags = HookFlags(m='multiword')
 
 # TODO infinite loops... they can happen if you're just that commited to screwing everything up!
 
-@hook.command('set', flags=flags, args_amt=lambda x: 2 >= len(x), return_json=False, doc=("Set a variable for substitution in commands",
+@hook.command('var set', flags=flags, args_amt=lambda x: 2 >= len(x), return_json=False, doc=("Set a variable for substitution in commands",
                                                          "Setting a variable will replace all parameters prefixed with `$' with the variable previously set",
                                                          "These variables will persist through restarts, and can be edited in the `/libs/substitutes.json` file",
                                                          "Flags:",
@@ -14,16 +14,16 @@ flags = HookFlags(m='multiword')
                                                          "interpreted as if it were entered into the command raw, instead of in quotes.",
                                                          "-m Allows you to cover certain parameter flags with a set variable.",
                                                          "Also, VPS names and nicknames are set automatically to their id.",
-                                                         "\t`set <key> <value ...>', with any length value."))
+                                                         "\t`var set <key> <value ...>', with any length value."))
 def set(args, flags):
     user_substitutes.sub(args[0], ' '.join(args[1:]), 'm' in flags)
     user_substitutes.dump_subs()
     return ("{var} has been set to {x}{val}{x}".format(var=args[0], x="" if 'm' in flags else '"',
                                                      val=' '.join(args[1:])))
 
-@hook.command('get', args_amt=1, return_json=False, doc=("Return the value of a variable, set automatically or by `set'",
+@hook.command('var get', args_amt=1, return_json=False, doc=("Return the value of a variable, set automatically or by `set'",
                                                          "All vps nicknames and names are set automatically to their vps id.",
-                                                         "\t`get <key>'"))
+                                                         "\t`var get <key>'"))
 def get(args, flags):
     arg = user_substitutes.fetch(args[0])
     if not arg:
@@ -33,11 +33,11 @@ def get(args, flags):
 
 
 
-@hook.command("delete", args_amt=1, return_json=False, doc=("Delete a variable's link to its value.",
+@hook.command("var delete", args_amt=1, return_json=False, doc=("Delete a variable's link to its value.",
                                                             "These variables, set with `set', are removed from the program completely once you delete them.",
                                                             "However, keep in mind variables set by certain commands  will be re-set if the command is called again.",
                                                             "Usage:",
-                                                            "\t`delete <variable>'"))
+                                                            "\t`var delete <variable>'"))
 def delete_var(args, flags):
     if args[0] in user_substitutes.data:
         v = user_substitutes.data[args[0]]
