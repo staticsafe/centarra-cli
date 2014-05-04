@@ -1,4 +1,4 @@
-from utils.config import language
+from libs import language
 from utils import hook, HookFlags
 
 from re import compile
@@ -29,7 +29,7 @@ def help(args, flags):
     for c in hook.commands:
         if command in c:
             reply += _help_append(c, hook.commands[c], 'l' in flags)
-    return reply or language['help']['command_not_found']
+    return reply if reply else language['help']['command_not_found']
 
 def _help_append(name, command, long):
     if not long:

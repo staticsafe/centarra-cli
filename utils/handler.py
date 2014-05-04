@@ -1,9 +1,7 @@
-from utils.config import language
+from libs import language
 from shlex import split
 import json
 from libs import substitutes
-from libs.api import ApiError
-
 
 class HookFlags():
 
@@ -142,7 +140,7 @@ class HookManager():
                 return language['incorrect_arguments']
 
         try:
-            response = command['function'](args, flags)
+            response = command['function'](args=args, flags=flags)
         except ApiError as e:
             try:
                 return {
@@ -159,3 +157,5 @@ class HookManager():
             return response.form()
 
         return response
+
+from libs.api import ApiError

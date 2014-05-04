@@ -1,5 +1,5 @@
 from utils import hook, HookFlags, JsonResponse
-from libs import centarra, sub
+from libs import centarra
 from utils.date import pretty_date
 
 @hook.command("incident list", doc=("View a list of all incidents recorded in the panel.", "Usage:", "\t`incident list'"))

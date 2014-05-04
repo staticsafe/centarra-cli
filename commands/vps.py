@@ -1,5 +1,5 @@
 from utils import hook, HookFlags, JsonResponse
-from libs import centarra, substitutes, sub
+from libs import centarra, substitutes
 from utils.domain import is_valid_host
 
 flags = HookFlags(l='ip-limits', s='sla', i='ips', m='mac', u='user', w='watchdog', M='memory', S='swap', D='disk')
@@ -22,8 +22,8 @@ flags = HookFlags(l='ip-limits', s='sla', i='ips', m='mac', u='user', w='watchdo
 def list(args, flags):
     reply = centarra('/vps/list')
     for i in reply['vpslist']:
-        sub(i['name'], i['id'])
-        sub(i['nickname'], i['id'])
+        substitutes.sub('vps list', i['name'], i['id'])
+        substitutes.sub('vps list', i['nickname'], i['id'])
     rpl = []
     for i in reply['vpslist']:
         st = '\t{id}: {name} ("{nickname}") on {node}\t\t' + \
@@ -38,8 +38,8 @@ def list(args, flags):
              ("{disk}gb disk\t" if "D" in flags else '')
         rpl.append(st.format(**i))
 
-    rpl = '\r\n'.join(rpl)
-    return JsonResponse(reply, "Your current vServers: \r\n%s" % rpl)
+    rpl = '\n'.join(rpl)
+    return JsonResponse(reply, "Your current vServers: \n%s" % rpl)
 
 flags = HookFlags(l='ip-limits', b='btc-price', S='swap', M='memory', D='disk')
 
@@ -61,15 +61,15 @@ flags = HookFlags(l='ip-limits', b='btc-price', S='swap', M='memory', D='disk')
 def available(args, flags):
     reply = centarra('/vps/signup')
     for i in reply['regions']:
-        sub(i['name'], i['id'])
+        substitutes.sub('vps regions', i['name'], i['id'])
     for i in reply['resource_plans']:
-        sub(i['name'], i['id'])
+        substitutes.sub('vps plans', i['name'], i['id'])
     rpl = []
     if not args or args[0] == "regions":
-        rpl.append("Available Regions: \r\n")
+        rpl.append("Available Regions: \n")
         rpl += ["(%s): %s" % (i['id'], i['name']) for i in reply['regions']]
     if not args or args[0] == "plans":
-        rpl.append("Available Plans: \r\n")
+        rpl.append("Available Plans: \n")
         for i in reply['resource_plans']:
             rpl.append(("({id}) '{name}' - ${price_usd:.2f}" + (" ({price_btc} BTC)" if 'b' in flags else "") + "."
                        + ("\tIPv4 limit {ipv4_limit}, IPv6 limit {ipv6_limit}" if "l" in flags else "")
@@ -77,7 +77,7 @@ def available(args, flags):
                        + ("\tMemory {memory}mb" if 'M' in flags else "")
                        + ("\tDisk {disk}gb" if 'D' in flags else "")
             ).format(**i))
-    return JsonResponse(reply, '\r\n'.join(rpl))
+    return JsonResponse(reply, '\n'.join(rpl))
 
 
 
@@ -96,7 +96,7 @@ def signup(args, flags):
         return JsonResponse(reply, "The selected region did not have enough stock left to satisfy your request. Try using region '0' for a random location.")
     if not reply.get('service', False):
         return JsonResponse(reply, "Your new VPS has been created; please pay invoice {invoice} (${total:.2f}) to continue.".format(**reply['invoice']))
-    sub(reply['service']['name'], reply['service']['id'], False)
+    substitutes.sub('vps list', reply['service']['name'], reply['service']['id'])
     return JsonResponse(reply, "Your new vps is now named {name} (#{id}) on node {node}. Deploy it with `vps deploy'!"
                                                 .format(**reply['service']))
 
@@ -113,12 +113,12 @@ def info(args, flags):
     reply = centarra('/vps/%s' % args[0])
     service = reply['service']
     service['w'] = ' not' if not service['monitoring'] else ''
-    rpl = "\r\nServer {id} - {name} (\"{nickname}\")" + \
-        "\r\n\t{name} is on node {node} with {cpu_sla} CPU SLA status." + \
-        "\r\n\t{name} has {memory}mb memory, {swap}mb swap, and {disk}gb disk space." + \
-        "\r\n\t{name} is{w} being monitored, and has MAC address {mac}" + \
-        "\r\n\t{name} is allowed {ipv6_limit} IPv6 addresses and {ipv4_limit} IPv4 addresses." + \
-          (''.join(["\r\n\tIt has IPv{x} address {ip} (id {id})".format(x=i['ipnet']['version'], **i) for i in service['ips']]) if 'i' in flags else '')
+    rpl = "\nServer {id} - {name} (\"{nickname}\")" + \
+        "\n\t{name} is on node {node} with {cpu_sla} CPU SLA status." + \
+        "\n\t{name} has {memory}mb memory, {swap}mb swap, and {disk}gb disk space." + \
+        "\n\t{name} is{w} being monitored, and has MAC address {mac}" + \
+        "\n\t{name} is allowed {ipv6_limit} IPv6 addresses and {ipv4_limit} IPv4 addresses." + \
+          (''.join(["\n\tIt has IPv{x} address {ip} (id {id})".format(x=i['ipnet']['version'], **i) for i in service['ips']]) if 'i' in flags else '')
     return JsonResponse(reply, rpl.format(**service))
 
 
@@ -130,8 +130,8 @@ def info(args, flags):
 def templates(args, flags):
     reply = centarra('/vps/%s/deploy' % args[0])
     for i in reply['templates']:
-        sub(reply['templates'][i]['name'], i)
-    return JsonResponse(reply, "Templates:\r\n" + '\r\n'.join(["\t%s = %s" % (i, reply['templates'][i]['name']) for i in reply['templates']]))
+        substitutes.sub('vps templates', reply['templates'][i]['name'], i)
+    return JsonResponse(reply, "Templates:\n" + '\n'.join(["\t%s = %s" % (i, reply['templates'][i]['name']) for i in reply['templates']]))
 
 intent = ['64bit-pvm', '32bit-pvm', 'hvm', 'rescue']  # current intents allowed to be sent
 
@@ -164,7 +164,7 @@ def deploy(args, flags):
 
     return JsonResponse(reply, "Your vServer #{vps} is being deployed with the image name {image}, root password {pw}".format(
         vps=args[0], image=args[1], pw=''.join(['*' for a in send['rootpass']]))
-                               + ('\r\n' if 'intent' in send or 's' in flags else "")
+                               + ('\n' if 'intent' in send or 's' in flags else "")
                                + (("Using virtualization type %s" % send['intent']) if 'intent' in send else '')
                                + ("; " if 'intent' in send and 's' in flags else "")
                                + ("Starting VPS after install completes" if 's' in flags else ""))  # TODO that's awful logic control. also fix ' and " differences... everywhere.
@@ -192,7 +192,7 @@ def stock(args, flags):
                         break
             else:
                 res[region] = reply[region][plan]
-        return JsonResponse(reply, ("%s: \r\n" % plan) + "\r\n".join(["\t%s: %s" % (i, res[i]) for i in res]))
+        return JsonResponse(reply, ("%s: \n" % plan) + "\n".join(["\t%s: %s" % (i, res[i]) for i in res]))
     res = []
     for region in reply:
         res.append("\n" + region)
@@ -341,7 +341,7 @@ def ip_manage(args, flags):
                 ip['ipnet']['netmask'],
                 ip['ipnet']['gateway'],
                 ip['ipnet']['network']))
-        return JsonResponse(reply, "\r\n".join(rpl))
+        return JsonResponse(reply, "\n".join(rpl))
     elif oper == "available":
         vps_id = args[0]
         return "This operation is currently unavailable due to a pending pull request on the panel - we have no way to fetch this information."

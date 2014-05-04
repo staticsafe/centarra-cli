@@ -1,19 +1,10 @@
 #!/usr/bin/python
 
 import commands
-
-import os
-import json
-
-if not os.path.exists('languages/.cli_history'):
-    open('languages/.cli_history', 'a').close()
-if not os.path.exists('libs/substitutes.json'):
-    with open('libs/substitutes.json', 'w+') as out:
-        json.dump({}, out)
+import libs
 
 from utils import hook
 import sys
-from utils import config
 
 def completer(text, state):
     options = [i for i in hook.commands if i.startswith(text)]

@@ -1,3 +1,5 @@
+
+from utils import hook
 try:
     import gevent
     import sys
@@ -6,6 +8,8 @@ try:
     import atexit
     import fcntl
     import os
+
+    import impossible
 
     from gevent.event import Event
     from gevent.socket import wait_read
@@ -16,7 +20,6 @@ try:
     from ws4py.exc import HandshakeError
     from ws4py.client.geventclient import WebSocketClient
 
-    from utils import hook, HookFlags, JsonResponse
     from libs import centarra, substitutes, sub
     from utils.domain import is_valid_host
 

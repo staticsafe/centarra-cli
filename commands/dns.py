@@ -1,6 +1,6 @@
 from utils import hook, HookFlags, JsonResponse
 from utils.domain import is_valid_host
-from libs import centarra, sub
+from libs import centarra, substitutes
 
 flags = HookFlags(l="long")
 
@@ -16,7 +16,7 @@ def zones(args, flags):
     reply = centarra('/dns/zones')
     resp = []
     for zone in reply['zones']:
-        sub(zone['name'], zone['id'])
+        substitutes.sub('dns zones', zone['name'], zone['id'])
         a = "Zone #{id} - {name}, owned by {user}, with {x} records assigned.".format(x=len(zone['records']), **zone)
         if 'l' in flags:
             a += "\r\n\tID\t\tType\t\tPriority\tTTL\t\tContent"
@@ -39,7 +39,7 @@ flags = HookFlags(p="priority", t="ttl")
 def zone(args, flags):
     reply = centarra('/dns/zone/%s' % args[0])
     zone = reply['zone']
-    sub(zone['name'], zone['id'])
+    substitutes.sub('dns zones', zone['name'], zone['id'])
     a = "Zone #{id} - {name}, owned by {user}, with {x} records assigned".format(x=len(zone['records']), **zone)
     a += "\r\n\tID\t\tType\t\t" \
          + ("Priority\t" if 'p' in flags else "") \

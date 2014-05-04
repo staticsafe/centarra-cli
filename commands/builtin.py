@@ -1,6 +1,6 @@
-from utils import hook
-from utils import HookFlags
-from libs import substitutes, dump_subs
+from utils import hook, HookFlags, JsonResponse
+from libs import user_substitutes
+from libs.api import flashed
 
 flags = HookFlags(m='multiword')
 
@@ -16,8 +16,8 @@ flags = HookFlags(m='multiword')
                                                          "Also, VPS names and nicknames are set automatically to their id.",
                                                          "\t`set <key> <value ...>', with any length value."))
 def set(args, flags):
-    substitutes[args[0]] = [' '.join(args[1:]), 'm' in flags]
-    dump_subs()
+    user_substitutes.sub(args[0], ' '.join(args[1:]), 'm' in flags)
+    user_substitutes.dump_subs()
     return ("{var} has been set to {x}{val}{x}".format(var=args[0], x="" if 'm' in flags else '"',
                                                      val=' '.join(args[1:])))
 
@@ -25,11 +25,12 @@ def set(args, flags):
                                                          "All vps nicknames and names are set automatically to their vps id.",
                                                          "\t`get <key>'"))
 def get(args, flags):
-    try:
-        return ("The variable {var} is set to the value {x}{value}{x}. Set it with `set [-m] {var} <new_value>'"
-                .format(var=args[0], value=substitutes[args[0]][0], x='' if substitutes[args[0]][1] else '"'))
-    except KeyError:
+    arg = user_substitutes.fetch(args[0])
+    if not arg:
         return "The variable {var} does not exist. Set it with `set [-m] {var} <new_value>'".format(var=args[0])
+    return ("The variable {var} is set to the value {x}{value}{x}. Set it with `set [-m] {var} <new_value>'"
+            .format(var=args[0], value=arg['value'], x='' if arg['multiword'] else '"'))
+
 
 
 @hook.command("delete", args_amt=1, return_json=False, doc=("Delete a variable's link to its value.",
@@ -38,11 +39,11 @@ def get(args, flags):
                                                             "Usage:",
                                                             "\t`delete <variable>'"))
 def delete_var(args, flags):
-    if args[0] in substitutes:
-        v = substitutes[args[0]]
-        del(substitutes[args[0]])
-        dump_subs()
-        return "The variable {var}, set to {val}, has been deleted and will no longer substitute into commands." + \
+    if args[0] in user_substitutes.data:
+        v = user_substitutes.data[args[0]]
+        del(user_substitutes.data[args[0]])
+        user_substitutes.dump_subs()
+        return "The variable {var}, set to {value}, has been deleted and will no longer substitute into commands.\n" + \
                "Set the variable again with `set {var} <new value>'".format(var=args[0], value=v)
     return "No variable could be found with that name {name}.".format(name=args[0])
 
@@ -53,3 +54,8 @@ def exit(args, flags):
     import sys
     print("Exiting Centarra-CLI.")
     sys.exit(0)
+
+@hook.command("flashed", return_json=False, doc=("Display 'flashed' messages sent with the last request",
+                              "Flashed messages usually indicate the status of the last request, and are presented to the panel as notifications in the corner."))
+def get_flashed(args, flags):
+    return flashed()

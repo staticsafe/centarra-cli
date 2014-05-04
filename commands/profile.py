@@ -1,5 +1,5 @@
 from utils import hook, HookFlags, JsonResponse
-from libs import centarra
+from libs import centarra, flashed
 
 
 @hook.command('profile password', args_amt=1, doc=("Change your password in the panel.",
@@ -15,7 +15,7 @@ def password(args, flags):
                                                    "Usage:", "\t`profile webhook-uri <uri>'"))
 def webhook_uri(args, flags):
     reply = centarra('/profile/webhook-uri', webhook_uri=args[0])
-    return JsonResponse(reply, "Your webhook has been successfully changed.")
+    return JsonResponse(reply, flashed())
 
 
 @hook.command('profile contact', args_amt=10,
