@@ -9,8 +9,6 @@ try:
     import fcntl
     import os
 
-    import impossible
-
     from gevent.event import Event
     from gevent.socket import wait_read
 
@@ -20,7 +18,7 @@ try:
     from ws4py.exc import HandshakeError
     from ws4py.client.geventclient import WebSocketClient
 
-    from libs import centarra, substitutes, sub
+    from libs import centarra, substitutes
 
     def enable_echo(fd, enabled):
         if enabled:
@@ -115,7 +113,7 @@ try:
 
     @hook.command('vps console', args_amt=1, flags=None, doc=("Connect to the VPS console.",))
     def vps_console(args, flags):
-        reply = centarra('/vps/%s' % args[0])
+        reply = centarra('/vps/%s' % substitutes.swap("vps list", args[0]))
         service = reply['service']
         if not service:
             return 'Cannot find WSS-API endpoint'
@@ -127,7 +125,9 @@ try:
             print >> sys.stderr, e
         return '[Console detached.]\r'
 
-except ImportError:
+except ImportError as e:
+    print("Import errors prevent us from enabling the vps console command: ")
+    print(e.args)
     @hook.command('vps console', args_amt=lambda x: True, doc=("[DISABLED]: Connect to the VPS console.",))
     def vps_cons_removed(args, flags):
         return "This command has been disabled due to import errors. Please see the dependencies listed in the README for more information."
