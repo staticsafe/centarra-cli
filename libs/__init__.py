@@ -42,10 +42,10 @@ class Sub():
         with open(self.f, 'w') as out:
             json.dump(self.data, out)
 
+class UserSubstitutions(Sub):
+
     def fetch(self, key):
         return self.data.get(key, None)
-
-class UserSubstitutions(Sub):
 
     def sub(self, var, val, multiword=False):
         if not var in self.data:
@@ -54,10 +54,29 @@ class UserSubstitutions(Sub):
 
 class Substitutions(Sub):
 
-    def sub(self, type, var, val):
-        if not type in self.data:
-            self.data[type] = {}
-        self.data[type][var] = {"value": val, "expiry": time.time() + (60 * 60 * 24)}
+    def swap(self, type_, key, intended=int):
+        #if intended and type(key) is intended:
+        #    return key
+        key = str(key).lower()
+        res = self.data.get(type_, {}).get(key, {}).get("value", False)
+        if not res:
+            res = self.loop(type_, key + " ")  # Prefer it with a space afterwards. this prevents against 512 => 5120 mb
+        if not res:
+            res = self.loop(type_, key)
+        if not res:
+            return key
+        return res
+
+    def loop(self, type_, key):
+        for check in self.data.get(type_, {}):
+            dc = self.data.get(type_, {})[check]
+            if key in str(check):
+                return dc['value']
+
+    def sub(self, type_, var, val):
+        if not type_ in self.data:
+            self.data[type_] = {}
+        self.data[type_][str(var).lower()] = {"value": val, "expiry": time.time() + (60 * 60 * 24)}
         self.dump_subs()
 
 substitutes = Substitutions(SUBSTITUTES_FILE)

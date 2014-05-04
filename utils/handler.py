@@ -1,7 +1,7 @@
 from libs import language
 from shlex import split
 import json
-from libs import substitutes
+from libs import user_substitutes
 
 class HookFlags():
 
@@ -79,13 +79,14 @@ class HookManager():
                 v = str(v) # substituted values can take interesting forms!
                 go = False
                 if v.startswith("$"):
-                    if v[1:] in substitutes:
-                        if substitutes[v[1:]][1]:
-                            args = args[:i] + split(substitutes[v[1:]][0]) + args[i+1:]
+                    if v[1:] in user_substitutes.data:
+                        key = user_substitutes.fetch(v[1:])
+                        if key['multiline']:
+                            args = args[:i] + split(key['value']) + args[i+1:] # splice it in as any length of arguments
                             go = True
                             break
                         else:
-                            args = args[:i] + [substitutes[v[1:]][0]] + args[i+1:]
+                            args = args[:i] + [key['value']] + args[i+1:]  # splice it in as one argument
                             go = True
                             break
         if len(args) < 1:

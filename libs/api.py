@@ -25,9 +25,9 @@ class ApiError(Exception):
     def __init__(self, code):
         self.code = code
 
-def flashed():
+def flashed(default="No flashed response was given indicating the status of this request. Run `flashed' to see if a new response was given since."):
     flashes = requests.get(CENTARRA_BASE_URL + "/notifications.json",
                                  auth=(config['centarra_username'], config['centarra_api_key'])).json()
     if not flashes['messages']:
-        return "No flashed response was given indicating the status of this request. Run `flashed' to see if a new response was given since."
+        return default
     return '\n'.join(['[{}]: {}'.format(msg['type'], msg['message']) for msg in flashes['messages']])
