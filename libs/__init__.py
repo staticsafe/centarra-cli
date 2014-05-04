@@ -1,16 +1,22 @@
 import json
 import time
 import os
+import sys
 
 HOME = os.path.expanduser("~")
-CONFIG_DIR = HOME + '/.config/centarra-cli/'
-HISTORY_FILE = CONFIG_DIR + '.cli_history'
-SUBSTITUTES_FILE = CONFIG_DIR + 'substitutes.json'
-USER_SUBSTITUTES_FILE = CONFIG_DIR+ 'user_substitutes.json'
-CONFIGURATION_FILE = CONFIG_DIR + 'config.json'
+CONFIG_DIR = os.path.join(HOME + '/.config/centasdgfasdfi/')
+HISTORY_FILE = os.path.join(CONFIG_DIR, '.cli_history')
+SUBSTITUTES_FILE = os.path.join(CONFIG_DIR, 'substitutes.json')
+USER_SUBSTITUTES_FILE = os.path.join(CONFIG_DIR, 'user_substitutes.json')
+CONFIGURATION_FILE = os.path.join(CONFIG_DIR, 'config.json')
 LANGUAGE_FILE = 'languages/%s.json'
+
 if not os.path.exists(CONFIG_DIR):
-    os.mkdir(CONFIG_DIR)
+    try:
+        os.makedirs(CONFIG_DIR)
+    except os.error:
+        print("Configuration directory {} could not be created or written to.".format(CONFIG_DIR))
+        sys.exit(2)
 if not os.path.exists(HISTORY_FILE):
     open(HISTORY_FILE, 'w+').close()
 if not os.path.exists(SUBSTITUTES_FILE):
