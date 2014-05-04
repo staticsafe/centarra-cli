@@ -21,7 +21,6 @@ try:
     from ws4py.client.geventclient import WebSocketClient
 
     from libs import centarra, substitutes, sub
-    from utils.domain import is_valid_host
 
     def enable_echo(fd, enabled):
         if enabled:

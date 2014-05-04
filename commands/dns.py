@@ -1,5 +1,4 @@
 from utils import hook, HookFlags, JsonResponse
-from utils.domain import is_valid_host
 from libs import centarra, substitutes, flashed
 import time
 
