@@ -1,7 +1,6 @@
 from utils import hook, HookFlags, JsonResponse
-from libs import centarra
+from libs import centarra, flashed
 from utils.date import pretty_date
-import math
 
 flags = HookFlags(l="long")
 
@@ -56,9 +55,7 @@ def view(args, flags):
 def credit(args, flags):
     if args and args[0] == "add":
         reply = centarra("/invoice/svccredit", creditamt=args[1])
-        if "invoices" in reply:
-            return JsonResponse(reply, "Adding service credit failed. Make sure your value was formatted correctly and is over $1.00.")
-        return JsonResponse(reply, "Invoice {invoice} was created for a value of {total}. See `invoice view {invoice}' for more information.".format(**(reply['invoice'])))
+        return JsonResponse(reply, flashed("Invoice {invoice} was created for a value of {total}. See `invoice view {invoice}' for more information.".format(**(reply['invoice']))))
     else:
         reply = centarra("/invoice/service_credit.json")
         return JsonResponse(reply, "User {username} has ${total:.2f} in total service credit.".format(**reply))
@@ -68,7 +65,7 @@ def credit(args, flags):
                                                  "\t`invoice resend <invoice_id>'"))
 def resend(args, flags):
     reply = centarra("/invoice/%s/resend" % args[0])
-    return JsonResponse(reply, "Your invoice has been successfully resent.")
+    return JsonResponse(reply, flashed())
 
 @hook.command("invoice apply-credit", args_amt=1, doc=("Apply account service credit to this invoice.",
                                                        "If the service credit amount is not enough, all available credit will be applied.",

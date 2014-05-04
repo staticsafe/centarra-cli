@@ -1,6 +1,6 @@
 from utils import hook, HookFlags, JsonResponse
 from utils.domain import is_valid_host
-from libs import centarra, substitutes
+from libs import centarra, substitutes, flashed
 import time
 
 flags = HookFlags(l="long")
@@ -80,13 +80,8 @@ def zone(args, flags):
 def new(args, flags):
     reply = centarra('/dns/zone/new', domain_name=args[0])
     if reply == {}:
-        # Centarra doesn't provide us with the error, so we have to figure it out ourselves...
-        if not is_valid_host(args[0]):
-            response = "Domain %s is invalid - Domain zone was not created." % args[0]
-        else:
-            response = "Domain %s already exists in Centarra's system - Domain zone not created." % args[0]
-    else:
-        response = "Domain {id} was created. See `dns zone {id}' for more information.".format(**reply['zone'])
+        return reply, flashed()
+    response = "Domain {id} was created. See `dns zone {id}' for more information.".format(**reply['zone'])
     return JsonResponse(reply, response)
 
 
@@ -121,12 +116,12 @@ def add_record(args, flags):
         send = {"subdomain": args[1], "type": args[2], "content": args[3], 'ttl': flags.get('t', 300),
                 "prio": flags.get('p', 0)}
         reply = centarra("/zone/%s/record/new" % substitutes.swap("dns zones", args[0]), **send)
-        return JsonResponse(reply, "{subdomain}{dot}{domain} was set as {type} to {content}."
+        return JsonResponse(reply, flashed("{subdomain}{dot}{domain} was set as {type} to {content}."
                                    + ("\tTTL = {ttl}" if 't' in flags else "")
                                    + ("\tPriority = {prio}" if 'p' in flags else "").format(
                         dot="." if send['subdomain'] is not "" else "",
                         domain=reply['zone']['name'],
-                        **send)
+                        **send))
         )
 
 @hook.command("dns delete-record", args_amt=2, doc=("Delete a record from your DNS zone.",

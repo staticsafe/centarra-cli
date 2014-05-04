@@ -7,7 +7,7 @@ from libs import centarra, flashed
                                                    "\t`profile password <password>'",))
 def password(args, flags):
     reply = centarra('/profile/password', newpass=args[0])
-    return JsonResponse(reply, "Your password has been successfully changed.")
+    return JsonResponse(reply, flashed())
 
 
 @hook.command('profile webhook-uri', args_amt=1,
@@ -40,7 +40,7 @@ def profile_contact(args, flags):
     rsp = ""
     for i in args:
         rsp += "%s=%s, " % (i, args[i])
-    return JsonResponse(reply, "Your contact information has been updated (%s)" % rsp[:-2])
+    return JsonResponse(reply, flashed() + "\n" + rsp[:-2])
 
 
 @hook.command("profile new-api-key", doc=("Generate a new API key on your account.",
@@ -51,7 +51,7 @@ def profile_contact(args, flags):
                                           "\t`profile new-api-key'"))
 def new_api_key(args, flags):
     reply = centarra('/profile/new-apikey')
-    return JsonResponse(reply, "A new API key has been generated in your account.")
+    return JsonResponse(reply, flashed())
 
 # It's silly to include the totp stuff in here, so I'm leaving it out.
 
@@ -70,5 +70,5 @@ def login_preferences(args, flags):
         'success': 1 if 's' in flags else 0
     }
     reply = centarra('/profile/login-preferences', **preferences)
-    return JsonResponse(reply, "Your login preferences have been updated: " +
+    return JsonResponse(reply, flashed() + '\n' +
                                ', '.join(["%s log-in events: %s" % (a, bool(preferences[a])) for a in preferences]))

@@ -1,6 +1,5 @@
 from utils import hook, HookFlags, JsonResponse
-from libs import centarra, substitutes
-from utils.domain import is_valid_host
+from libs import centarra, substitutes, flashed
 import time
 
 def update_vps_list():
@@ -202,7 +201,7 @@ def deploy(args, flags):
             print("Warning: virtualization type is unknown - ignoring value %s" % flags['v'])
     reply = centarra('/vps/%s/deploy' % substitutes.swap("vps list", substitutes.swap("vps list", args[0])), imagename=args[1], **send)
 
-    return JsonResponse(reply, "Your vServer #{vps} is being deployed with the image name {image}, root password {pw}".format(
+    return JsonResponse(reply, flashed() + "\nYour vServer #{vps} is being deployed with the image name {image}, root password {pw}".format(
         vps=substitutes.swap("vps list", args[0]), image=args[1], pw=''.join(['*' for a in send['rootpass']]))
                                + ('\n' if 'intent' in send or 's' in flags else "")
                                + (("Using virtualization type %s" % send['intent']) if 'intent' in send else '')
@@ -277,7 +276,7 @@ def delete(args, flags):
     line = raw_input('[N/y]: ')
     if line == "y":
         reply = centarra("/vps/%s/delete" % substitutes.swap("vps list", args[0]))
-        return JsonResponse(reply, "Your vServer has been destroyed.")
+        return JsonResponse(reply, flashed())
     return "Aborted."
 
 @hook.command("vps renew", args_amt=1, doc=("Create a new invoice under your vServer, which will add one month of credit to your expiry date.",
@@ -295,7 +294,7 @@ def renew(args, flags):
                                            "\t`vps boot <server-name>'"))
 def create(args, flags):  # I don't know if I should allow specifying a KernelProfile, I don't know where they come from
     reply = centarra("/vps/%s/create" % substitutes.swap("vps list", args[0]))
-    return JsonResponse(reply, "Your boot is in progress (Job ID: %s)" % reply['job'])
+    return JsonResponse(reply, flashed())
 
 @hook.command("vps rescue", args_amt=1, doc=("Boot your vServer into rescue mode.",  # stolen documentation from Centarra.
                                              "Rescue mode is used to perform manual recovery operations on your VPS,",
@@ -309,7 +308,7 @@ def create(args, flags):  # I don't know if I should allow specifying a KernelPr
                                              "\t`vps rescue <server-name>'"))
 def rescue(args, flags):
     reply = centarra("/vps/%s/start-rescue" % substitutes.swap("vps list", args[0]))
-    return JsonResponse(reply, "Your request to boot into rescue mode has been queued.")
+    return JsonResponse(reply, flashed())
 
 flags = HookFlags(f="forceful")
 @hook.command("vps shutdown", flags=flags, args_amt=1, doc=("Shut down your vServer.",
@@ -320,7 +319,7 @@ flags = HookFlags(f="forceful")
 def shutdown(args, flags):
     cmd = "destroy" if 'f' in flags else "shutdown"
     reply = centarra("/vps/%s/%s" % (substitutes.swap("vps list", args[0]), cmd))
-    return JsonResponse(reply, "Your request to shutdown has been queued (Job ID: %s)." % reply['job'])
+    return JsonResponse(reply, flashed())
 
 @hook.command("vps powercycle", args_amt=1, doc=("Forcefully power-cycle your vServer",
                                                  "This is equivilent to forcefully shutting your vps down and restarting it.",
@@ -328,7 +327,7 @@ def shutdown(args, flags):
                                                  "\t`vps powercycle <server-name>'"))
 def powercycle(args, flags):
     reply = centarra("/vps/%s/powercycle" % substitutes.swap("vps list", args[0]))
-    return JsonResponse(reply, "Your request to powercycle has been queued (Job ID: %s)." % reply['job'])
+    return JsonResponse(reply, flashed())
 
 @hook.command("vps stats", args_amt=4, doc=("A json-only way to access graph data in the panel.",
                                             "Available stats are include netstats, cpustats, and vbdstats.",
@@ -358,18 +357,12 @@ def ip_manage(args, flags):
         vps_id, net_id, ip = tuple(args)
         vps_id = substitutes.swap("vps list", vps_id)
         reply = centarra("/vps/{}/admin/ip/add".format(vps_id), ipbox="{}!{}".format(net_id, ip))
-        # I guess we may as well be nice and check if the IP was adding... otherwise they reached their quota.
-        for existing_ip in reply['service']['ips']:
-            if existing_ip["ip"] == ip:
-                return JsonResponse(reply, "IP address {} was successfully added to your vServer (IP ID {})".format(ip, existing_ip['id']))
-        return JsonResponse(reply, "We were unable to add the requested IP address to your vServer. Have you reached your IP quota?")
+        return JsonResponse(reply, flashed("IP address {0} was successfully added to your vServer.".format(ip)))
     elif oper == "rdns":
         vps_id, ip_id, rdns = tuple(args)
         vps_id = substitutes.swap("vps list", vps_id)
         reply = centarra("/vps/{}/admin/ip/{}/rdns-modify".format(vps_id, ip_id), rdns=rdns)
-        if not is_valid_host(rdns):
-            return JsonResponse(reply, "IP rDNS was likely not set correctly due to malformation in input.")
-        return JsonResponse(reply, "IP rDNS was successfully set on your IP address.")
+        return JsonResponse(reply, flashed("IP rDNS was successfully set on your IP address."))
     elif oper == "delete":
         vps_id, ip_id = tuple(args)
         vps_id = substitutes.swap("vps list", vps_id)
