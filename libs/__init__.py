@@ -4,7 +4,7 @@ import os
 import sys
 
 HOME = os.path.expanduser("~")
-CONFIG_DIR = os.path.join(HOME + '/.config/centasdgfasdfi/')
+CONFIG_DIR = os.path.join(HOME + '/.config/centarra-cli/')
 HISTORY_FILE = os.path.join(CONFIG_DIR, '.cli_history')
 SUBSTITUTES_FILE = os.path.join(CONFIG_DIR, 'substitutes.json')
 USER_SUBSTITUTES_FILE = os.path.join(CONFIG_DIR, 'user_substitutes.json')
