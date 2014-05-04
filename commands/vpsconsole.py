@@ -12,6 +12,8 @@ try:
     from gevent.event import Event
     from gevent.socket import wait_read
 
+    del(sys.modules['threading'])
+
     from wssh.client import StdioPipedWebSocketClient
     from wssh.common import StdioPipedWebSocketHelper
 

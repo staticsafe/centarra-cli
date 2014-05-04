@@ -98,7 +98,11 @@ class HookManager():
             command = ' '.join(args[0:2])  # neat, these don't throw errors if the list is too short.
             args = args[2:]
         if not command in self.commands:
-            return language['command_not_found']
+            if 'help' in self.commands:
+                args = command.split(' ') + args
+                command = 'help'
+            else:
+                return language['command_not_found']
         command = self.commands[command]
         # we pass an args list and Flags object to the command. we have HookFlags + json flag.
         flags = {}
