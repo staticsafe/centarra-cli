@@ -1,6 +1,44 @@
 from utils import hook, HookFlags, JsonResponse
 from libs import centarra, substitutes
 from utils.domain import is_valid_host
+import time
+
+def update_vps_list():
+    if not needs_update('vps list'):
+        return
+    substitutes.data['vps list'] = {}
+    reply = centarra('/vps/list')
+    for i in reply['vpslist']:
+        substitutes.sub('vps list', i['name'], i['id'])
+        substitutes.sub('vps list', i['nickname'], i['id'])
+
+def needs_update(category):
+    if substitutes.data.get(category, False):
+        current = substitutes.data[category]
+        for i in current:
+            if current[i]['expiry'] < time.time():
+                return True
+    else:
+        return True
+    return False
+
+def update_signup():
+    if not needs_update("vps regions") and not needs_update("vps plans"):
+        return
+    substitutes.data['vps regions'] = {}
+    reply = centarra('/vps/signup')
+    for i in reply['regions']:
+        substitutes.sub('vps regions', i['name'], i['id'])
+    for i in reply['resource_plans']:
+        substitutes.sub('vps plans', i['name'], i['id'])
+
+def update_templates_list(arg):
+    if not needs_update("vps templates"):
+        return
+    substitutes.data['vps templates'] = {}
+    reply = centarra('/vps/%s/deploy' % substitutes.swap("vps list", substitutes.swap("vps list", arg)))
+    for i in reply['templates']:
+        substitutes.sub('vps templates', reply['templates'][i]['name'], i)
 
 flags = HookFlags(l='ip-limits', s='sla', i='ips', m='mac', u='user', w='watchdog', M='memory', S='swap', D='disk')
 
@@ -83,12 +121,12 @@ def available(args, flags):
 
 @hook.command("vps signup", args_amt=2, doc=("Sign up for a brand new VPS using information from `vps available'.",
                                              "This command accepts only a plan and a region - the rest is worked out by deploying.",
-                                             "Remember that, after viewing available plans and regions, you can use plan names as variables for their plan ids."
                                              "Usage:",
                                              "\t`vps signup <region> <plan>'",
-                                             "Examples:"
+                                             "Examples:",
                                              "\t`vps signup dallas 512' (after viewing available plans)"))
 def signup(args, flags):
+    update_signup()
     reply = centarra('/vps/signup', plan=substitutes.swap("vps plans", args[1]), region=substitutes.swap("vps regions", args[0]))
     if not reply:
         return JsonResponse(reply, "The selected region did not have enough stock left to satisfy your request. Try using region '0' for a random location.")
@@ -104,10 +142,11 @@ flags = HookFlags(i="ips")
                                             "Flags:"
                                             "\t-i, --ips: Display information on this server's IP addresses",
                                             "Usage:",
-                                            "\tvps info <server_id> [-i]",
+                                            "\tvps info <server-name> [-i]",
                                             "Examples:",
-                                            "\tvps info $nickname -i"))
+                                            "\tvps info nickname-0 -i"))
 def info(args, flags):
+    update_vps_list()
     reply = centarra('/vps/%s' % substitutes.swap("vps list", args[0]))
     service = reply['service']
     service['w'] = ' not' if not service['monitoring'] else ''
@@ -124,8 +163,9 @@ def info(args, flags):
                                                 "This will display all of the names of the xml files available that you can send to the `vps deploy' command.",
                                                 "The short names of the deployment templates will also be set as variables pointing to their template names, if the name is not already taken.",
                                                 "Usage:",
-                                                "\tvps templates <vps_id>"))
+                                                "\tvps templates <server-name>"))
 def templates(args, flags):
+    update_vps_list()
     reply = centarra('/vps/%s/deploy' % substitutes.swap("vps list", substitutes.swap("vps list", args[0])))
     for i in reply['templates']:
         substitutes.sub('vps templates', reply['templates'][i]['name'], i)
@@ -143,8 +183,10 @@ flags = HookFlags(v={"long": 'virtualization', "param": True}, s='start', p={"lo
                                  "\t-s, --start: Start your vps immediately after finishing deployment",
                                  "\t-p, --password: Your new root pasword; if this is not provided, you will be prompted for the password.",
                                  "Usage:",
-                                 "\tvps deploy <vps_id> <image_name> [-p root_password] [-v virtualization] [-s]"))
+                                 "\tvps deploy <server-name> <image_name> [-p root_password] [-v virtualization] [-s]"))
 def deploy(args, flags):
+    update_vps_list()
+    update_templates_list(args[0])
     send = {}
     if 'p' in flags:
         send['rootpass'] = flags['p']
@@ -158,7 +200,7 @@ def deploy(args, flags):
             send['intent'] = flags['v']
         else:
             print("Warning: virtualization type is unknown - ignoring value %s" % flags['v'])
-    reply = centarra('/vps/%s/deploy' % args[0], imagename=args[1], **send)
+    reply = centarra('/vps/%s/deploy' % substitutes.swap("vps list", substitutes.swap("vps list", args[0])), imagename=args[1], **send)
 
     return JsonResponse(reply, "Your vServer #{vps} is being deployed with the image name {image}, root password {pw}".format(
         vps=substitutes.swap("vps list", args[0]), image=args[1], pw=''.join(['*' for a in send['rootpass']]))
@@ -202,8 +244,9 @@ def stock(args, flags):
 @hook.command("vps nick", args_amt=2, doc=("Sets the nickname of your vps.",
                                            "If your nickname is improperly formatted, it will be cleared.",
                                            "Usage",
-                                           "\t`vps nick <vps_id> <nickname>'"))
+                                           "\t`vps nick <server-name> <nickname>'"))
 def nick(args, flags):
+    update_vps_list()
     reply = centarra("/vps/%s/setnickname" % substitutes.swap("vps list", args[0]), nickname=args[1])
     rpl = "The nickname of vps \"%s\" (#%s) is now set to \"%s\"" % (reply['name'], substitutes.swap("vps list", args[0]), reply['nickname'])
     return JsonResponse(reply, rpl)
@@ -214,8 +257,9 @@ def nick(args, flags):
                                                   "Watchdog monitoring will boot your server back up when it is down.",
                                                   "To enable watchdog monitoring, use the parameter 'enable' - similarly, 'disable' disabled watchdog monitoring.",
                                                   "Usage:",
-                                                  "\t`vps monitoring <vps_id> (enable|disable)'"))
+                                                  "\t`vps monitoring <server-name> (enable|disable)'"))
 def monitoring(args, flags):
+    update_vps_list()
     if args not in ['enable', 'disable']:
         return "Invalid monitoring status! - use either 'enable' or 'disable' after the vps_id argument."
     reply = centarra("/vps/%s/monitoring/%s" % (substitutes.swap("vps list", args[0]), args[1]))
@@ -227,9 +271,9 @@ def monitoring(args, flags):
                                              "Flags:",
                                              "\t-y, --yes: assume yes to confirmation on deleting your vServer",
                                              "Usage:",
-                                             "\t`vps delete <vps_id>'"))
+                                             "\t`vps delete <server-name>'"))
 def delete(args, flags):
-    print("Are you sure you would like to delete your vServer?")
+    print("Are you sure you would like to delete your vServer {} (#{})?".format(args[0], substitutes.swap("vps list", args[0])))
     line = raw_input('[N/y]: ')
     if line == "y":
         reply = centarra("/vps/%s/delete" % substitutes.swap("vps list", args[0]))
@@ -239,7 +283,7 @@ def delete(args, flags):
 @hook.command("vps renew", args_amt=1, doc=("Create a new invoice under your vServer, which will add one month of credit to your expiry date.",
                                             "If you have enough service credit to pay for the invoice, the invoice will be marked as paid automatically.",
                                             "Usage:",
-                                            "\t`vps renew <vps_id>'"))
+                                            "\t`vps renew <server-name>'"))
 def renew(args, flags):
     reply = centarra("/vps/%s/renew" % substitutes.swap("vps list", args[0]))
     if 'invoice_id' in reply:
@@ -248,7 +292,7 @@ def renew(args, flags):
 
 @hook.command("vps boot", args_amt=1, doc=("Boot up a vServer that is currently offline.",
                                            "Usage:",
-                                           "\t`vps boot <vps_id>'"))
+                                           "\t`vps boot <server-name>'"))
 def create(args, flags):  # I don't know if I should allow specifying a KernelProfile, I don't know where they come from
     reply = centarra("/vps/%s/create" % substitutes.swap("vps list", args[0]))
     return JsonResponse(reply, "Your boot is in progress (Job ID: %s)" % reply['job'])
@@ -262,7 +306,7 @@ def create(args, flags):  # I don't know if I should allow specifying a KernelPr
                                              "We strongly suggest saving any open files to disk and shutting down any",
                                              "\tdatabase software before launching rescue mode if the VPS is powered on.",
                                              "Usage:",
-                                             "\t`vps rescue <vps_id>'"))
+                                             "\t`vps rescue <server-name>'"))
 def rescue(args, flags):
     reply = centarra("/vps/%s/start-rescue" % substitutes.swap("vps list", args[0]))
     return JsonResponse(reply, "Your request to boot into rescue mode has been queued.")
@@ -272,7 +316,7 @@ flags = HookFlags(f="forceful")
                                                "Flags:",
                                                "\t-f, --forceful: Shut down the server forcefully, using the xl destroy command.",
                                                "Usage:",
-                                               "\t`vps shutdown <vps_id>'"))
+                                               "\t`vps shutdown <server-name>'"))
 def shutdown(args, flags):
     cmd = "destroy" if 'f' in flags else "shutdown"
     reply = centarra("/vps/%s/%s" % (substitutes.swap("vps list", args[0]), cmd))
@@ -281,7 +325,7 @@ def shutdown(args, flags):
 @hook.command("vps powercycle", args_amt=1, doc=("Forcefully power-cycle your vServer",
                                                  "This is equivilent to forcefully shutting your vps down and restarting it.",
                                                  "Usage:",
-                                                 "\t`vps powercycle <vps_id>'"))
+                                                 "\t`vps powercycle <server-name>'"))
 def powercycle(args, flags):
     reply = centarra("/vps/%s/powercycle" % substitutes.swap("vps list", args[0]))
     return JsonResponse(reply, "Your request to powercycle has been queued (Job ID: %s)." % reply['job'])
@@ -289,7 +333,7 @@ def powercycle(args, flags):
 @hook.command("vps stats", args_amt=4, doc=("A json-only way to access graph data in the panel.",
                                             "Available stats are include netstats, cpustats, and vbdstats.",
                                             "Usage:",
-                                            "\t`vps stats <vps_id> (cpustats|netstats|vbdstats) <start> <step>'"))
+                                            "\t`vps stats <server-name> (cpustats|netstats|vbdstats) <start> <step>'"))
 def stats(args, flags):
     args[0] = substitutes.swap("vps list", args[0])
     if not args[1] in ["cpustats", "netstats", "vbdstats"]:
@@ -307,7 +351,7 @@ def stats(args, flags):
                     "\t`rdns': Set a rDNS record on a specific IP address.",
                     "\t`delete': Remove an IP address permenently from your vServer.",
                     "Usage:",
-                    "\t`vps ip <vps_id> (available|list|add <net_id> <ip_addr>|rdns <ip_id> <record_value>|delete <ip_id>)'"))
+                    "\t`vps ip <server-name> (available|list|add <net_id> <ip_addr>|rdns <ip_id> <record_value>|delete <ip_id>)'"))
 def ip_manage(args, flags):
     oper = args.pop(1)
     if oper == "add":
