@@ -4,7 +4,7 @@ As a new way to access your [Centarra](http://billing.centarra.com) account, *Ce
 
 ### Installation
 
-Currently, you can grab a clone of this repository as it goes, and run the cli.py file out-of-the box - however, you will need to have the `requests` module installed.
+Currently, you can grab a clone of this repository and run the cli.py file out-of-the box - however, you will need to have the `requests` module installed.
 
 This can be done easily with the PIP Python package manager:
 
@@ -14,11 +14,25 @@ sudo pip install requests
 
 We'll make this optional at some point.
 
-You're also going to need to rename `config.sample.json` to `config.json` before running the program, in order to provide the CLI with the information it needs to work properly.
+Follow the prompts to input your username and API key, which are then stored in `~/.config/centarra-cli/config.json`
+
+To use the `console` command (beta) you need the following:
+
+```bash
+sudo apt-get install libevent-dev
+pip install paramiko gevent
+```
+wssh must be installed from source
+
+```bash
+git clone https://github.com/progrium/wssh.git
+cd wssh
+python setup.py install
+```
 
 ### Usage
 
-The `help` command holds all the defined documentation in the program, and the flag system should be reminicent of your familiar shell.
+The `help` command holds all the defined documentation in the program, and the flag system should be reminiscent of your familiar shell.
 
 For a refresher:
 
