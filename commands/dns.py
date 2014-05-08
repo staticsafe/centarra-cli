@@ -111,16 +111,16 @@ flags = HookFlags(t={"long": "ttl", "param": True}, p={"long": "priority", "para
                                 "Flags:",
                                 "\t-t, --ttl: Set the time-to-live (TTL) for the new record to be added. Default is 300.",
                                 "\t-p, --priority: Set the priority of this record to be added. Default is 0.",
-                                "Usage:"
+                                "Usage:",
                                 "\t`dns add-record <zone> <subdomain> <type> <content> [-t <ttl>][-p <priority>]'"))
 def add_record(args, flags):
     if args[1] == "valid":
-        reply = centarra('/zone/%s/record/new' % substitutes.swap("dns zones", args[0]))
-        return JsonResponse(reply, "Available records:" + ', '.join(reply['record_types']))
+        reply = centarra('/dns/zone/%s/record/new' % substitutes.swap("dns zones", args[0]))
+        return JsonResponse(reply, "Available records: " + ', '.join(reply['record_types']))
     else:  # id subdomain type content
         send = {"subdomain": args[1], "type": args[2], "content": args[3], 'ttl': flags.get('t', 300),
                 "prio": flags.get('p', 0)}
-        reply = centarra("/zone/%s/record/new" % substitutes.swap("dns zones", args[0]), **send)
+        reply = centarra("/dns/zone/%s/record/new" % substitutes.swap("dns zones", args[0]), **send)
         return JsonResponse(reply, flashed("{subdomain}{dot}{domain} was set as {type} to {content}."
                                    + ("\tTTL = {ttl}" if 't' in flags else "")
                                    + ("\tPriority = {prio}" if 'p' in flags else "").format(
@@ -135,7 +135,7 @@ def add_record(args, flags):
                                                     "\t`dns delete-record <zone> <record_id>'"))
 def delete_record(args, flags):
     update_dns_zones()
-    reply = centarra("/zone/%s/record/%s/delete" % (substitutes.swap("dns zones", args[0]), args[1]))
+    reply = centarra("/dns/zone/%s/record/%s/delete" % (substitutes.swap("dns zones", args[0]), args[1]))
     return JsonResponse(reply, "Your record %s in domain %s has been deleted." % (args[1], substitutes.swap("dns zones", args[0])))
 
 
@@ -146,7 +146,7 @@ def delete_record(args, flags):
                                              "\t`dns delete <zone>'"))
 def delete(args, flags):
     update_dns_zones()
-    reply = centarra("/zone/%s/delete" % substitutes.swap("dns zones", args[0]))
+    reply = centarra("/dns/zone/%s/delete" % substitutes.swap("dns zones", args[0]))
     return JsonResponse(reply, "Your zone %s (#%s) has been successfully deleted." % (args[0], substitutes.swap("dns zones", args[0])))
 
 @hook.command("dns axfr-import", args_amt=2, doc=("Import DNS records via axfr.",
@@ -155,5 +155,5 @@ def delete(args, flags):
                                                   "\t`dns axfr-import <zone> <nameserver>'"))
 def axfr_import(args, flags):
     update_dns_zones()
-    reply = centarra("/zone/%s/axfr-import" % substitutes.swap("dns zones", args[0]), nameserver=args[1])
+    reply = centarra("/dns/zone/%s/axfr-import" % substitutes.swap("dns zones", args[0]), nameserver=args[1])
     return JsonResponse(reply, "Your axfr-import process is running for domain %s on nameserver %s" % (args[0], args[1]))
