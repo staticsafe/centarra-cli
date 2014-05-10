@@ -18,7 +18,7 @@ def needs_update(category):
 def update_dns_zones():
     if not needs_update('dns zones'):
         return
-    substitutes.data['vps list'] = {}
+    substitutes.data['dns zones'] = {}
     reply = centarra('/dns/zones')
     for zone in reply['zones']:
         substitutes.sub('dns zones', zone['name'], zone['id'])
