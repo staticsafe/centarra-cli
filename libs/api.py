@@ -16,7 +16,7 @@ def centarra(url, **kwargs):
             auth=(config['centarra_username'], config['centarra_api_key']))
     try:
         resp = r.json()
-        if config['debug']:
+        if config['debug_mode']:
             print resp
         return resp
     except:  # TODO vague, simplejson.decoder.JSONDecodeError
