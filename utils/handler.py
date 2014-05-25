@@ -153,6 +153,8 @@ class HookManager():
                     403: "Error: The requested page responded with a 403 Forbidden error code. Perhaps an incorrect ID was supplied in a command, or you're attempting to access resources that aren't yours?"}[e.code]
             except KeyError:
                 return "An unexpected error occurred while executing this command, and the information provided by Centarra is unreadable by us. Perhaps a command argument was malformed or Centarra is undergoing maintenance? ({} Error)".format(e.code)
+        except KeyError:
+            return "This command was expecting a part of the input or response that was not provided. Check the version of this CLI and that your API key and username are entered correctly."
         if isinstance(response, JsonResponse):
             if wants_json:
                 return response.js()
